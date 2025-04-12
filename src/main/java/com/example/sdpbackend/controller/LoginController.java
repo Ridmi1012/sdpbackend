@@ -8,12 +8,11 @@ import com.example.sdpbackend.entity.Customer;
 import com.example.sdpbackend.service.AdminService;
 import com.example.sdpbackend.service.CustomerService;
 import com.example.sdpbackend.service.JWTService;
-import lombok.Data;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
-import java.util.Base64;
+
 
 @RestController
 @RequestMapping("/api/auth")

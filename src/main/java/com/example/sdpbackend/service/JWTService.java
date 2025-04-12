@@ -9,10 +9,13 @@ import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.util.Date;
+import java.util.logging.Logger;
 
 
 @Service
 public class JWTService {
+    private static final Logger logger = Logger.getLogger(JWTService.class.getName());
+
     @Value("${jwt.secret}")
     private String secret;
     private final long EXPIRATION_TIME = 864_000_000; // 10 days
@@ -21,7 +24,6 @@ public class JWTService {
         byte[] keyBytes = Decoders.BASE64.decode(secret);
         return Keys.hmacShaKeyFor(keyBytes);
     }
-
 
     public String generateToken(String username, String userType) {
         return Jwts.builder()
@@ -33,16 +35,38 @@ public class JWTService {
                 .compact();
     }
 
-//    public boolean validateToken(String token) {
-//        try {
-//            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
-//            return true;
-//        } catch (JwtException e) {
-//            return false;
-//        }
-//    }
-//
-//    public Claims extractClaims(String token) {
-//        return Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
-//    }
+    public Claims extractClaims(String token) {
+        try {
+            return Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token)
+                    .getBody();
+        } catch (ExpiredJwtException e) {
+            logger.warning("Token expired: " + e.getMessage());
+            throw e;
+        } catch (UnsupportedJwtException e) {
+            logger.warning("Unsupported JWT: " + e.getMessage());
+            throw e;
+        } catch (MalformedJwtException e) {
+            logger.warning("Malformed JWT: " + e.getMessage());
+            throw e;
+        } catch (Exception e) {
+            logger.severe("Error parsing JWT token: " + e.getMessage());
+            throw e;
+        }
+    }
+
+    public boolean validateToken(String token) {
+        try {
+            Jwts.parserBuilder()
+                    .setSigningKey(getSigningKey())
+                    .build()
+                    .parseClaimsJws(token);
+            return true;
+        } catch (Exception e) {
+            logger.warning("Invalid token: " + e.getMessage());
+            return false;
+        }
+    }
 }
