@@ -1,10 +1,7 @@
 package com.example.sdpbackend.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 @Entity
 @Data
@@ -27,6 +24,8 @@ public class Customer {
     @Column(nullable = false, length = 100)
     private String email;
 
+    @Setter
+    @Getter
     @Column(nullable = false, unique = true, length = 50)
     private String username;
 
@@ -35,4 +34,13 @@ public class Customer {
 
     @Column(nullable = false, length = 10)
     private String contact;
+
+    public Integer getcustomerId() {
+        return customerId;
+    }
+
+    public void setcustomerId(Integer id) {
+        this.customerId = id;
+    }
+
 }
