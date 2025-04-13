@@ -13,6 +13,7 @@ import lombok.Setter;
 public class Admin {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "AdminID")
     private int adminId;
 
     @Column(name = "First_Name", nullable = false, length = 100)
