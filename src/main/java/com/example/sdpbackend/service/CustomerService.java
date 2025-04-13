@@ -35,4 +35,24 @@ public class CustomerService {
     public Customer updateCustomer(Customer customer) {
         return customerRepository.save(customer);
     }
+
+    // Add the missing changePassword method
+    public boolean changePassword(String username, String currentPassword, String newPassword) {
+        Customer customer = findByUsername(username);
+
+        if (customer == null) {
+            return false;
+        }
+
+        // Check if current password matches
+        if (!passwordEncoder.matches(currentPassword, customer.getPassword())) {
+            return false;
+        }
+
+        // Update password
+        customer.setPassword(passwordEncoder.encode(newPassword));
+        customerRepository.save(customer);
+
+        return true;
+    }
 }

@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class CustomerServiceImpl extends CustomerService {
 
-    private final PasswordEncoder passwordEncoder;
-
     public CustomerServiceImpl(CustomerRepository customerRepository, PasswordEncoder passwordEncoder) {
         super(customerRepository, passwordEncoder);
-        this.passwordEncoder = passwordEncoder;
     }
 }
