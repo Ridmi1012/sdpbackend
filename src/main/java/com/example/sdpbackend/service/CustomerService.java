@@ -26,4 +26,13 @@ public class CustomerService {
             System.out.println("Querying database for user: " + username);
             return customerRepository.findByUsername(username); // Directly returns null if not found
         }
+
+    public Customer findById(int id) {
+        Optional<Customer> customer = customerRepository.findById(id);
+        return customer.orElse(null);
     }
+
+    public Customer updateCustomer(Customer customer) {
+        return customerRepository.save(customer);
+    }
+}

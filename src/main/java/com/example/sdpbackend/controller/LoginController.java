@@ -50,8 +50,11 @@ public class LoginController {
         if (customer != null) {
             System.out.println("Found customer: " + customer.getUsername()); // Log the customer found
             if (passwordEncoder.matches(password, customer.getPassword())) {
-                String token = jwtService.generateToken(customer.getUsername(), "CUSTOMER");
-                return ResponseEntity.ok(new LoginResponse("CUSTOMER", token));
+                String token = jwtService.generateToken(customer.getUsername(), "CUSTOMER"); // Generate token here
+                LoginResponse response = new LoginResponse("CUSTOMER", token);
+                response.setFirstName(customer.getFirstName());
+                response.setUserId(customer.getcustomerId());
+                return ResponseEntity.ok(response);
             } else {
                 System.out.println("Password mismatch for customer: " + username); // Log password mismatch
             }
@@ -62,8 +65,11 @@ public class LoginController {
         if (admin != null) {
             System.out.println("Found admin: " + admin.getUsername()); // Log the admin found
             if (passwordEncoder.matches(password, admin.getPassword())) {
-                String token = jwtService.generateToken(admin.getUsername(), "ADMIN");
-                return ResponseEntity.ok(new LoginResponse("ADMIN", token));
+                String token = jwtService.generateToken(admin.getUsername(), "ADMIN"); // Generate token here
+                LoginResponse response = new LoginResponse("ADMIN", token);
+                response.setFirstName(admin.getFirstName());
+                response.setUserId(admin.getAdminId());
+                return ResponseEntity.ok(response);
             } else {
                 System.out.println("Password mismatch for admin: " + username); // Log password mismatch
             }
@@ -72,7 +78,6 @@ public class LoginController {
         System.out.println("Invalid credentials"); // Log invalid credentials
         return ResponseEntity.badRequest().body(new LoginResponse("Invalid credentials", null));
     }
-
 }
 
 
