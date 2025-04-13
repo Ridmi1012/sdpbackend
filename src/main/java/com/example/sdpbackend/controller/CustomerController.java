@@ -2,6 +2,7 @@ package com.example.sdpbackend.controller;
 
 import com.example.sdpbackend.entity.Customer;
 import com.example.sdpbackend.service.CustomerService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.bind.annotation.CrossOrigin;
 
@@ -18,5 +19,34 @@ public class CustomerController {
     @PostMapping
     public Customer createCustomer(@RequestBody Customer customer) {
         return customerService.createCustomer(customer);
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<Customer> getCustomerById(@PathVariable int id) {
+        Customer customer = customerService.findById(id);
+        if (customer != null) {
+            return ResponseEntity.ok(customer);
+        } else {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @PutMapping("/{id}")
+    public ResponseEntity<Customer> updateCustomer(@PathVariable int id, @RequestBody Customer updatedCustomer) {
+        if (id != updatedCustomer.getcustomerId()) {
+            return ResponseEntity.badRequest().build();
+        }
+
+        Customer existingCustomer = customerService.findById(id);
+        if (existingCustomer == null) {
+            return ResponseEntity.notFound().build();
+        }
+
+        // Ensure we don't update username or password through this endpoint
+        updatedCustomer.setUsername(existingCustomer.getUsername());
+        updatedCustomer.setPassword(existingCustomer.getPassword());
+
+        Customer savedCustomer = customerService.updateCustomer(updatedCustomer);
+        return ResponseEntity.ok(savedCustomer);
     }
 }
