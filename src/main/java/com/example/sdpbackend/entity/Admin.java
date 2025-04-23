@@ -4,6 +4,9 @@ import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.ArrayList;
+import java.util.List;
+
 
 @Entity
 @Getter
@@ -29,7 +32,7 @@ public class Admin {
     private String username;
 
     @Column(nullable = false, length = 255)
-    private String password; // Hashed using BCrypt
+    private String password;
 
     @Column(name = "TelNo", length = 15)
     private String telNo;
