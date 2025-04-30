@@ -1,33 +1,28 @@
 package com.example.sdpbackend.service;
 
-import com.example.sdpbackend.dto.CategoryDTO;
-import com.example.sdpbackend.dto.DesignDTO;
-import com.example.sdpbackend.dto.DesignItemDTO;
-import com.example.sdpbackend.dto.ItemDTO;
+import com.example.sdpbackend.dto.*;
 import com.example.sdpbackend.entity.Category;
 import com.example.sdpbackend.entity.Design;
 import com.example.sdpbackend.entity.DesignItem;
 import com.example.sdpbackend.entity.Item;
-import com.example.sdpbackend.repository.CategoryRepository;
-import com.example.sdpbackend.repository.DesignItemRepository;
-import com.example.sdpbackend.repository.DesignRepository;
-import com.example.sdpbackend.repository.ItemRepository;
+import com.example.sdpbackend.repository.*;
 
 
 import jakarta.persistence.EntityNotFoundException;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.jpa.domain.Specification;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.time.LocalDateTime;
+
 import java.util.List;
-import java.util.UUID;
+
 import java.util.stream.Collectors;
 
 @Service
@@ -58,10 +53,21 @@ public class DesignService {
                 .collect(Collectors.toList());
     }
 
+    /**
+     * Returns the DTO representation of a design
+     */
     public DesignDTO.DesignResponse getDesignById(Integer id) {
         Design design = designRepository.findById(id)
                 .orElseThrow(() -> new EntityNotFoundException("Design not found with id: " + id));
         return mapToDesignResponse(design);
+    }
+
+    /**
+     * Returns the entity representation of a design - needed for OrderService
+     */
+    public Design getDesignEntityById(Integer id) {
+        return designRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("Design not found with id: " + id));
     }
 
     public List<DesignDTO.DesignResponse> getDesignsByCategory(Integer categoryId) {
@@ -71,6 +77,54 @@ public class DesignService {
         return designs.stream()
                 .map(this::mapToDesignResponse)
                 .collect(Collectors.toList());
+    }
+
+    /**
+     * Performs an advanced search for designs based on various criteria
+     */
+    public PagedResponseDTO<DesignDTO.DesignResponse> searchDesigns(DesignSearchDTO searchDTO) {
+        // Create a Pageable object for pagination and sorting
+        Pageable pageable = createPageable(searchDTO);
+
+        // Create specifications for dynamic querying
+        Specification<Design> specs = DesignSpecifications.withDynamicQuery(searchDTO);
+
+        // Execute the query with specifications
+        Page<Design> designPage = designRepository.findAll(specs, pageable);
+
+        // Convert the result to DTOs
+        List<DesignDTO.DesignResponse> designs = designPage.getContent().stream()
+                .map(this::mapToDesignResponse)
+                .collect(Collectors.toList());
+
+        // Create and return the paged response
+        return new PagedResponseDTO<>(
+                designs,
+                designPage.getNumber(),
+                designPage.getSize(),
+                designPage.getTotalElements(),
+                designPage.getTotalPages()
+        );
+    }
+
+    private Pageable createPageable(DesignSearchDTO searchDTO) {
+        // Default sorting is by ID if not specified
+        String sortBy = searchDTO.getSortBy() != null ? searchDTO.getSortBy() : "designID";
+
+        // Default direction is ascending if not specified
+        String sortDir = searchDTO.getSortDirection() != null ?
+                searchDTO.getSortDirection().toUpperCase() : "ASC";
+
+        Sort sort = Sort.by(
+                sortDir.equals("ASC") ? Sort.Direction.ASC : Sort.Direction.DESC,
+                sortBy
+        );
+
+        // Default page is 0 and size is 10 if not specified
+        int page = searchDTO.getPage() != null ? searchDTO.getPage() : 0;
+        int size = searchDTO.getSize() != null ? searchDTO.getSize() : 10;
+
+        return PageRequest.of(page, size, sort);
     }
 
     @Transactional
@@ -107,6 +161,7 @@ public class DesignService {
                 designItem.setDesign(savedDesign);
                 designItem.setItem(item);
                 designItem.setDefaultQuantity(itemRequest.getDefaultQuantity());
+                designItem.setOptional(itemRequest.isOptional()); // Added optional flag
 
                 designItemRepository.save(designItem);
             }
@@ -166,6 +221,7 @@ public class DesignService {
                 designItem.setDesign(updatedDesign);
                 designItem.setItem(item);
                 designItem.setDefaultQuantity(itemRequest.getDefaultQuantity());
+                designItem.setOptional(itemRequest.isOptional()); // Added optional flag
 
                 designItemRepository.save(designItem);
             }
@@ -226,7 +282,9 @@ public class DesignService {
         return new DesignItemDTO.DesignItemResponse(
                 designItem.getDesignItemID(),
                 itemResponse,
-                designItem.getDefaultQuantity()
+                designItem.getDefaultQuantity(),
+                designItem.isOptional() // Added optional flag to response
         );
     }
+
 }

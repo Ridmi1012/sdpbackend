@@ -9,5 +9,6 @@ import java.util.Optional;
 
 @Repository
 public interface ItemRepository extends JpaRepository<Item, Integer> {
+    // Method for searching items by name (case-insensitive)
     List<Item> findByNameContainingIgnoreCase(String name);
 }

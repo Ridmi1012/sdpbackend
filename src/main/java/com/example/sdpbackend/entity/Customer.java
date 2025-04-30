@@ -12,8 +12,7 @@ import lombok.*;
 public class Customer {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "CustomerID")
-    private int customerId;
+    private Integer customerId;
 
     @Column(nullable = false, length = 100)
     private String firstName;
