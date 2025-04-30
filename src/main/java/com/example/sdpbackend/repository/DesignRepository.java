@@ -27,7 +27,7 @@ public interface DesignRepository extends JpaRepository<Design, Integer>, JpaSpe
     Page<Design> findByBasePriceBetween(BigDecimal minPrice, BigDecimal maxPrice, Pageable pageable);
 
     // Search by name or description and filter by category
-    @Query("SELECT d FROM Design d WHERE (LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND d.category.id = :categoryId")
+    @Query("SELECT d FROM Design d WHERE (LOWER(d.name) LIKE LOWER(CONCAT('%', :keyword, '%')) OR LOWER(d.description) LIKE LOWER(CONCAT('%', :keyword, '%'))) AND d.category.categoryID = :categoryId")
     Page<Design> searchByKeywordAndCategory(@Param("keyword") String keyword, @Param("categoryId") Integer categoryId, Pageable pageable);
 
     // Find designs that contain all of the specified items
