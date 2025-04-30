@@ -8,7 +8,7 @@ import org.springframework.stereotype.Repository;
 import java.util.List;
 
 @Repository
-public interface DesignItemRepository extends JpaRepository<DesignItem,Integer>{
+public interface DesignItemRepository extends JpaRepository<DesignItem, Integer> {
     List<DesignItem> findByDesign(Design design);
     void deleteByDesign(Design design);
 }

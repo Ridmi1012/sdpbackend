@@ -9,28 +9,33 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Entity
-@Table(name = "Items")
+@Table(name = "items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class Item {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "itemid")  // Changed from ItemID
     private Integer itemID;
 
-    @Column(name = "name", nullable = false)
+    @Column(nullable = false)
     private String name;
 
-    @Column(name = "description")
     private String description;
 
-    @Column(name = "unit_price", nullable = false)  // Changed from UnitPrice
+    @Column(nullable = false)
     private BigDecimal unitPrice;
 
-    @Column(name = "created_at")
-    private LocalDateTime createdAt = LocalDateTime.now();
+    // Add timestamp fields
+    private LocalDateTime createdAt;
+    private LocalDateTime updatedAt;
 
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt = LocalDateTime.now();
+    // Explicit setters in case Lombok's @Data annotation isn't working correctly
+    public void setCreatedAt(LocalDateTime createdAt) {
+        this.createdAt = createdAt;
+    }
+
+    public void setUpdatedAt(LocalDateTime updatedAt) {
+        this.updatedAt = updatedAt;
+    }
 }

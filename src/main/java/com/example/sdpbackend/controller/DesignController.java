@@ -3,11 +3,14 @@ package com.example.sdpbackend.controller;
 
 import com.example.sdpbackend.dto.DesignDTO;
 
+import com.example.sdpbackend.dto.DesignSearchDTO;
+import com.example.sdpbackend.dto.PagedResponseDTO;
 import com.example.sdpbackend.service.DesignService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -15,7 +18,7 @@ import java.util.*;
 
 @RestController
 @RequestMapping("/api/designs")
-@CrossOrigin
+@CrossOrigin(origins = "*")
 public class DesignController {
     private final DesignService designService;
 
@@ -39,7 +42,13 @@ public class DesignController {
         return ResponseEntity.ok(designService.getDesignsByCategory(categoryId));
     }
 
+    @PostMapping("/search")
+    public ResponseEntity<PagedResponseDTO<DesignDTO.DesignResponse>> searchDesigns(@RequestBody DesignSearchDTO searchDTO) {
+        return ResponseEntity.ok(designService.searchDesigns(searchDTO));
+    }
+
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DesignDTO.DesignResponse> createDesign(
             @RequestPart("design") DesignDTO.DesignRequest request,
             @RequestPart(value = "image", required = false) MultipartFile image) {
@@ -47,6 +56,7 @@ public class DesignController {
     }
 
     @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<DesignDTO.DesignResponse> updateDesign(
             @PathVariable Integer id,
             @RequestPart("design") DesignDTO.DesignRequest request,
@@ -55,6 +65,7 @@ public class DesignController {
     }
 
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteDesign(@PathVariable Integer id) {
         designService.deleteDesign(id);
         return ResponseEntity.noContent().build();

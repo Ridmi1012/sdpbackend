@@ -5,7 +5,9 @@ import lombok.*;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -38,4 +40,14 @@ public class Design {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt = LocalDateTime.now();
+
+    // Add relationship with DesignItem to fix "Cannot resolve method 'getItems' in 'Design'" error
+    @OneToMany(mappedBy = "design", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<DesignItem> items = new ArrayList<>();
+
+    // Add additional images support
+    @ElementCollection
+    @CollectionTable(name = "design_additional_images", joinColumns = @JoinColumn(name = "design_id"))
+    @Column(name = "image_url")
+    private List<String> additionalImages = new ArrayList<>();
 }

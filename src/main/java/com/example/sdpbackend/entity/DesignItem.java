@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 
 @Entity
-@Table(name = "Design_Items")
+@Table(name = "design_items")
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -14,13 +14,14 @@ public class DesignItem {
     private Integer designItemID;
 
     @ManyToOne
-    @JoinColumn(name = "designID", nullable = false)
+    @JoinColumn(name = "design_id", nullable = false)
     private Design design;
 
     @ManyToOne
-    @JoinColumn(name = "itemID", nullable = false)
+    @JoinColumn(name = "item_id", nullable = false)
     private Item item;
 
-    @Column(nullable = false)
-    private Integer defaultQuantity = 1;
+    private int defaultQuantity;
+
+    private boolean isOptional;
 }
