@@ -1,4 +1,4 @@
-package com.example.sdpbackend.utill;
+package com.example.sdpbackend.util;
 
 import java.security.SecureRandom;
 import java.util.Base64;
