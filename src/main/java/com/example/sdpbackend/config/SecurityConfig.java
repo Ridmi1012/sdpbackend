@@ -3,6 +3,7 @@ package com.example.sdpbackend.config;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -86,8 +87,15 @@ public class SecurityConfig {
                                         request.getRequestURI().startsWith("/api/designs")
                         ).hasRole("ADMIN")
 
-                        .requestMatchers("/api/orders/**").authenticated()
-                        // Any other request needs authentication
+                        .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/new").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/ongoing").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/customer/**").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
+                        .requestMatchers(HttpMethod.POST, "/api/orders/**/confirm").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/**/cancel").authenticated()
+                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**/event-details").hasRole("CUSTOMER")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -100,17 +108,18 @@ public class SecurityConfig {
             return new BCryptPasswordEncoder();
         }
 
-        @Bean
-        public CorsConfigurationSource corsConfigurationSource() {
-            CorsConfiguration configuration = new CorsConfiguration();
-            configuration.setAllowedOrigins(List.of("http://localhost:4200"));
-            configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-            configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
-            configuration.setExposedHeaders(List.of("Authorization"));
-            configuration.setAllowCredentials(true);
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(Arrays.asList("Authorization", "Content-Type", "X-Requested-With"));
+        configuration.setExposedHeaders(List.of("Authorization"));
+        configuration.setAllowCredentials(true);
+        configuration.setMaxAge(3600L);
 
-            UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-            source.registerCorsConfiguration("/**", configuration);
-            return source;
-        }
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
+    }
 }

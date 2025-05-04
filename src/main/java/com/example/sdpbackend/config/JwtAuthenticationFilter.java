@@ -47,28 +47,28 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     username = claims.getSubject();
                     userType = claims.get("userType", String.class);
                     logger.info("Processing token for user: " + username + " with role: " + userType);
+
+                    // Set up Spring Security authentication
+                    if (username != null && userType != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+                        // Create an authentication token with the appropriate authority based on userType
+                        SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + userType.toUpperCase());
+
+                        UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
+                                username, null, Collections.singletonList(authority));
+
+                        // Add request details to the authentication token
+                        authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                        // Set the authentication in the SecurityContext
+                        SecurityContextHolder.getContext().setAuthentication(authToken);
+
+                        logger.info("Authenticated user: " + username + " with role: ROLE_" + userType.toUpperCase());
+                    }
                 }
             } catch (Exception e) {
                 logger.warning("Invalid JWT token: " + e.getMessage());
-                // Don't throw exception - just continue the chain without authentication
+                // Continue the chain without authentication
             }
-        }
-
-        // If we found a valid token, set up Spring Security authentication
-        if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-            // Create an authentication token with the appropriate authority based on userType
-            SimpleGrantedAuthority authority = new SimpleGrantedAuthority("ROLE_" + userType);
-
-            UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(
-                    username, null, Collections.singletonList(authority));
-
-            // Add request details to the authentication token
-            authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-
-            // Set the authentication in the SecurityContext
-            SecurityContextHolder.getContext().setAuthentication(authToken);
-
-            logger.info("Authenticated user: " + username + ", setting security context");
         }
 
         // Continue the filter chain
