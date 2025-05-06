@@ -4,6 +4,7 @@ import com.example.sdpbackend.dto.OrderRequest;
 import com.example.sdpbackend.dto.OrderResponse;
 import com.example.sdpbackend.entity.Design;
 import com.example.sdpbackend.entity.Order;
+import com.example.sdpbackend.exception.OrderException;
 import com.example.sdpbackend.repository.DesignRepository;
 import com.example.sdpbackend.repository.OrderRepository;
 import com.example.sdpbackend.util.OrderMapper;
@@ -28,6 +29,9 @@ public class OrderService {
     @Autowired
     private OrderMapper orderMapper;
 
+    @Autowired
+    private NotificationService notificationService;
+
     private final Random random = new Random();
 
     @Transactional
@@ -51,6 +55,10 @@ public class OrderService {
         }
 
         Order savedOrder = orderRepository.save(order);
+
+        // Send notification to admin about new order
+        notificationService.createOrderNotification(savedOrder);
+
         return orderMapper.toResponse(savedOrder);
     }
 
@@ -143,5 +151,39 @@ public class OrderService {
         String datePrefix = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String randomSuffix = String.format("%04d", random.nextInt(10000));
         return "ORD-" + datePrefix + "-" + randomSuffix;
+    }
+
+
+    @Transactional
+    public OrderResponse updateOrder(Long orderId, Double transportationCost, Double additionalRentalCost, String status) {
+        try {
+            Order order = orderRepository.findById(orderId)
+                    .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
+
+            // Update fields if provided
+            if (transportationCost != null) {
+                order.setTransportationCost(transportationCost);
+            }
+            if (additionalRentalCost != null) {
+                order.setAdditionalRentalCost(additionalRentalCost);
+            }
+            if (status != null) {
+                order.setStatus(status);
+            }
+
+            // Recalculate total price if cost components were updated
+            if (transportationCost != null || additionalRentalCost != null) {
+                Double basePrice = order.getBasePrice() != null ? order.getBasePrice() : 0.0;
+                Double newTransportCost = order.getTransportationCost() != null ? order.getTransportationCost() : 0.0;
+                Double newAdditionalCost = order.getAdditionalRentalCost() != null ? order.getAdditionalRentalCost() : 0.0;
+                Double totalPrice = basePrice + newTransportCost + newAdditionalCost;
+                order.setTotalPrice(totalPrice);
+            }
+
+            Order savedOrder = orderRepository.save(order);
+            return orderMapper.toResponse(savedOrder);
+        } catch (Exception e) {
+            throw new OrderException("Error updating order: " + e.getMessage(), e);
+        }
     }
 }

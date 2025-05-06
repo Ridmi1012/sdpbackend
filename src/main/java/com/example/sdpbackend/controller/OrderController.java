@@ -230,4 +230,37 @@ public class OrderController {
         }
         throw new RuntimeException("JWT Token is missing or invalid");
     }
+
+    @PostMapping("/{orderId}/update")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<?> updateOrder(@PathVariable Long orderId, @RequestBody Map<String, Object> updates, HttpServletRequest request) {
+        try {
+            // Verify authorization (only owner or admin can update)
+            OrderResponse currentOrder = orderService.getOrderById(orderId);
+            if (request.isUserInRole("ROLE_CUSTOMER")) {
+                String token = extractTokenFromRequest(request);
+                Claims claims = jwtService.extractClaims(token);
+                String username = claims.getSubject();
+
+                if (!username.equals(currentOrder.getCustomerId())) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "You can only update your own orders"));
+                }
+            }
+
+            // Handle different types of updates
+            Double transportationCost = updates.get("transportationCost") != null ?
+                    Double.valueOf(updates.get("transportationCost").toString()) : null;
+            Double additionalRentalCost = updates.get("additionalRentalCost") != null ?
+                    Double.valueOf(updates.get("additionalRentalCost").toString()) : null;
+            String status = updates.get("status") != null ? updates.get("status").toString() : null;
+
+            // You'll need to implement this method in your OrderService
+            OrderResponse updatedOrder = orderService.updateOrder(orderId, transportationCost, additionalRentalCost, status);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Failed to update order: " + e.getMessage()));
+        }
+    }
 }
