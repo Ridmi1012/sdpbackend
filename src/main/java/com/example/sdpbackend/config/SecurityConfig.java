@@ -37,10 +37,13 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
                         // Public endpoints that don't require authentication
-                        .requestMatchers("/api/auth/**").permitAll()
+                        .requestMatchers("/api/auth/**").permitAll() // Allow all auth endpoints including refresh
                         .requestMatchers("/api/customers").permitAll() // Allow registration
                         .requestMatchers("/api/customers/register").permitAll()
                         .requestMatchers("/api/designs/public/**").permitAll()
+
+                        // Allow notification subscription without authentication
+                        .requestMatchers("/api/notifications/subscribe").permitAll()
 
                         // Allow GET requests to items endpoint without authentication
                         .requestMatchers(request ->
@@ -66,8 +69,8 @@ public class SecurityConfig {
                                         request.getRequestURI().startsWith("/api/reviews")
                         ).permitAll()
 
-                        // Secure endpoints that require specific roles
                         .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/api/notifications/unread/count").hasRole("ADMIN")
 
                         // Only admin can modify items (POST, PUT, DELETE)
                         .requestMatchers(request ->
@@ -87,15 +90,17 @@ public class SecurityConfig {
                                         request.getRequestURI().startsWith("/api/designs")
                         ).hasRole("ADMIN")
 
+                        // Updated order endpoints permissions
                         .requestMatchers(HttpMethod.POST, "/api/orders").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/orders/new").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/orders/ongoing").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders/customer/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders/**").authenticated()
-                        .requestMatchers(HttpMethod.POST, "/api/orders/**/confirm").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/orders/**/cancel").authenticated()
-                        .requestMatchers(HttpMethod.PATCH, "/api/orders/**/event-details").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/confirm").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/cancel").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/event-details").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/update").hasRole("ADMIN")
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
@@ -103,10 +108,10 @@ public class SecurityConfig {
         return http.build();
     }
 
-        @Bean
-        public PasswordEncoder passwordEncoder() {
-            return new BCryptPasswordEncoder();
-        }
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return new BCryptPasswordEncoder();
+    }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
