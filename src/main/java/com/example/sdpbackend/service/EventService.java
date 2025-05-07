@@ -123,21 +123,6 @@ public class EventService {
         if (eventDetails.getLocation() != null) {
             event.setLocation(eventDetails.getLocation());
         }
-        if (eventDetails.getAssignedStaff() != null) {
-            event.setAssignedStaff(eventDetails.getAssignedStaff());
-        }
-        if (eventDetails.getEventNotes() != null) {
-            event.setEventNotes(eventDetails.getEventNotes());
-        }
-        if (eventDetails.getTransportationDetails() != null) {
-            event.setTransportationDetails(eventDetails.getTransportationDetails());
-        }
-        if (eventDetails.getSetupRequired() != null) {
-            event.setSetupRequired(eventDetails.getSetupRequired());
-        }
-        if (eventDetails.getSetupStartTime() != null) {
-            event.setSetupStartTime(eventDetails.getSetupStartTime());
-        }
 
         return eventRepository.save(event);
     }

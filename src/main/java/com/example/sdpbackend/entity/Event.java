@@ -46,13 +46,6 @@ public class Event {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    // Optional: Additional fields for event management
-    private String assignedStaff;
-    private String eventNotes;
-    private String transportationDetails;
-    private Boolean setupRequired;
-    private LocalTime setupStartTime;
-
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
