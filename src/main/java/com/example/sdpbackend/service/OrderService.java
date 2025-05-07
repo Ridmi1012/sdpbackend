@@ -2,9 +2,12 @@ package com.example.sdpbackend.service;
 
 import com.example.sdpbackend.dto.OrderRequest;
 import com.example.sdpbackend.dto.OrderResponse;
+import com.example.sdpbackend.entity.Customer;
 import com.example.sdpbackend.entity.Design;
+import com.example.sdpbackend.entity.EventDetails;
 import com.example.sdpbackend.entity.Order;
 import com.example.sdpbackend.exception.OrderException;
+import com.example.sdpbackend.repository.CustomerRepository;
 import com.example.sdpbackend.repository.DesignRepository;
 import com.example.sdpbackend.repository.OrderRepository;
 import com.example.sdpbackend.util.OrderMapper;
@@ -32,19 +35,22 @@ public class OrderService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private EventService eventService;
+
     private final Random random = new Random();
 
     @Transactional
-    public OrderResponse createOrder(OrderRequest orderRequest) {
-        Order order = orderMapper.toEntity(orderRequest);
+    public OrderResponse createOrder(OrderRequest orderRequest, Customer customer) {
+        // Create order entity using mapper
+        Order order = new Order();
 
-        // Generate unique order number
+        // Set basic order properties
         order.setOrderNumber(generateOrderNumber());
-
-        // Set default values
-        if (order.getStatus() == null) {
-            order.setStatus("pending");
-        }
+        order.setDesignId(orderRequest.getDesignId());
+        order.setOrderType(orderRequest.getOrderType());
+        order.setCustomer(customer);
+        order.setStatus(orderRequest.getStatus() != null ? orderRequest.getStatus() : "pending");
 
         // For as-is orders, fetch the base price from the design
         if ("as-is".equals(order.getOrderType())) {
@@ -54,6 +60,28 @@ public class OrderService {
             order.setBasePrice(design.getBasePrice().doubleValue());
         }
 
+        // Create and populate EventDetails
+        EventDetails eventDetails = new EventDetails();
+        eventDetails.setOrder(order);
+
+        if (orderRequest.getCustomDetails() != null) {
+            eventDetails.setCustomName(orderRequest.getCustomDetails().getCustomName());
+            eventDetails.setCustomAge(orderRequest.getCustomDetails().getCustomAge());
+            eventDetails.setVenue(orderRequest.getCustomDetails().getVenue());
+            eventDetails.setEventDate(orderRequest.getCustomDetails().getEventDate());
+            eventDetails.setEventTime(orderRequest.getCustomDetails().getEventTime());
+            eventDetails.setEventCategory(orderRequest.getCustomDetails().getEventCategory());
+
+            if (orderRequest.getCustomDetails().getRelationshipToPerson() != null) {
+                eventDetails.setRelationshipToPerson(orderRequest.getCustomDetails().getRelationshipToPerson());
+            } else if (orderRequest.getCustomerInfo() != null && orderRequest.getCustomerInfo().getRelationshipToPerson() != null) {
+                eventDetails.setRelationshipToPerson(orderRequest.getCustomerInfo().getRelationshipToPerson());
+            }
+        }
+
+        order.setEventDetails(eventDetails);
+
+        // Save the order (cascade will save eventDetails)
         Order savedOrder = orderRepository.save(order);
 
         // Send notification to admin about new order
@@ -62,8 +90,8 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 
-    public List<OrderResponse> getCustomerOrders(String customerId) {
-        List<Order> orders = orderRepository.findByCustomerId(customerId);
+    public List<OrderResponse> getCustomerOrders(Integer customerId) {
+        List<Order> orders = orderRepository.findByCustomerCustomerId(customerId);
         return orders.stream()
                 .map(orderMapper::toResponse)
                 .collect(Collectors.toList());
@@ -96,6 +124,14 @@ public class OrderService {
                 .collect(Collectors.toList());
     }
 
+    public List<OrderResponse> getCustomerOngoingOrders(Integer customerId) {
+        List<Order> orders = orderRepository.findByCustomerCustomerIdAndStatusIn(
+                customerId, List.of("confirmed", "partial"));
+        return orders.stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
     @Transactional
     public OrderResponse confirmOrder(Long orderId, Double transportationCost, Double additionalRentalCost) {
         Order order = orderRepository.findById(orderId)
@@ -111,6 +147,10 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
 
         Order savedOrder = orderRepository.save(order);
+
+        // Create an event for this confirmed order
+        eventService.createEventFromOrder(savedOrder);
+
         return orderMapper.toResponse(savedOrder);
     }
 
@@ -131,16 +171,22 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        if (venue != null) {
-            order.setVenue(venue);
-        }
-        if (eventDate != null) {
-            order.setEventDate(eventDate);
-        }
-        if (eventTime != null) {
-            order.setEventTime(eventTime);
+        EventDetails eventDetails = order.getEventDetails();
+        if (eventDetails == null) {
+            throw new RuntimeException("Event details not found for order with id: " + orderId);
         }
 
+        if (venue != null) {
+            eventDetails.setVenue(venue);
+        }
+        if (eventDate != null) {
+            eventDetails.setEventDate(eventDate);
+        }
+        if (eventTime != null) {
+            eventDetails.setEventTime(eventTime);
+        }
+
+        // The changes will be persisted due to CascadeType.ALL
         Order savedOrder = orderRepository.save(order);
         return orderMapper.toResponse(savedOrder);
     }
@@ -153,37 +199,32 @@ public class OrderService {
         return "ORD-" + datePrefix + "-" + randomSuffix;
     }
 
-
     @Transactional
     public OrderResponse updateOrder(Long orderId, Double transportationCost, Double additionalRentalCost, String status) {
-        try {
-            Order order = orderRepository.findById(orderId)
-                    .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
 
-            // Update fields if provided
-            if (transportationCost != null) {
-                order.setTransportationCost(transportationCost);
-            }
-            if (additionalRentalCost != null) {
-                order.setAdditionalRentalCost(additionalRentalCost);
-            }
-            if (status != null) {
-                order.setStatus(status);
-            }
-
-            // Recalculate total price if cost components were updated
-            if (transportationCost != null || additionalRentalCost != null) {
-                Double basePrice = order.getBasePrice() != null ? order.getBasePrice() : 0.0;
-                Double newTransportCost = order.getTransportationCost() != null ? order.getTransportationCost() : 0.0;
-                Double newAdditionalCost = order.getAdditionalRentalCost() != null ? order.getAdditionalRentalCost() : 0.0;
-                Double totalPrice = basePrice + newTransportCost + newAdditionalCost;
-                order.setTotalPrice(totalPrice);
-            }
-
-            Order savedOrder = orderRepository.save(order);
-            return orderMapper.toResponse(savedOrder);
-        } catch (Exception e) {
-            throw new OrderException("Error updating order: " + e.getMessage(), e);
+        // Update fields if provided
+        if (transportationCost != null) {
+            order.setTransportationCost(transportationCost);
         }
+        if (additionalRentalCost != null) {
+            order.setAdditionalRentalCost(additionalRentalCost);
+        }
+        if (status != null) {
+            order.setStatus(status);
+        }
+
+        // Recalculate total price if cost components were updated
+        if (transportationCost != null || additionalRentalCost != null) {
+            Double basePrice = order.getBasePrice() != null ? order.getBasePrice() : 0.0;
+            Double newTransportCost = order.getTransportationCost() != null ? order.getTransportationCost() : 0.0;
+            Double newAdditionalCost = order.getAdditionalRentalCost() != null ? order.getAdditionalRentalCost() : 0.0;
+            Double totalPrice = basePrice + newTransportCost + newAdditionalCost;
+            order.setTotalPrice(totalPrice);
+        }
+
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toResponse(savedOrder);
     }
 }

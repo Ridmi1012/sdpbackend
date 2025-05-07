@@ -2,6 +2,9 @@ package com.example.sdpbackend.controller;
 
 import com.example.sdpbackend.dto.OrderRequest;
 import com.example.sdpbackend.dto.OrderResponse;
+import com.example.sdpbackend.entity.Customer;
+import com.example.sdpbackend.repository.CustomerRepository;
+import com.example.sdpbackend.service.JWTService;
 import com.example.sdpbackend.service.OrderService;
 import io.jsonwebtoken.Claims;
 import jakarta.servlet.http.HttpServletRequest;
@@ -9,36 +12,47 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/orders")
 @CrossOrigin(origins = "http://localhost:4200")
 public class OrderController {
-
     @Autowired
     private OrderService orderService;
 
     @Autowired
-    private com.example.sdpbackend.service.JWTService jwtService;
+    private CustomerRepository customerRepository;
+
+    @Autowired
+    private JWTService jwtService;
 
     // Create a new order (customers only)
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, HttpServletRequest request) {
         try {
-            // Extract customer ID from JWT token
+            // Extract customer username from JWT token
             String token = extractTokenFromRequest(request);
             Claims claims = jwtService.extractClaims(token);
             String username = claims.getSubject();
 
-            // Set the customer ID in the order request
-            orderRequest.setCustomerId(username);
+            // Find the customer by username
+            Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+            if (!customerOpt.isPresent()) {
+                return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                        .body(Map.of("message", "Customer not found"));
+            }
+            Customer customer = customerOpt.get();
 
-            OrderResponse orderResponse = orderService.createOrder(orderRequest);
+            // Create the order with proper customer entity
+            OrderResponse orderResponse = orderService.createOrder(orderRequest, customer);
             return ResponseEntity.status(HttpStatus.CREATED).body(orderResponse);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
@@ -49,7 +63,7 @@ public class OrderController {
     // Get customer's orders
     @GetMapping("/customer/{customerId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
-    public ResponseEntity<?> getCustomerOrders(@PathVariable String customerId, HttpServletRequest request) {
+    public ResponseEntity<?> getCustomerOrders(@PathVariable Integer customerId, HttpServletRequest request) {
         try {
             // If user is a customer, verify they can only access their own orders
             if (request.isUserInRole("ROLE_CUSTOMER")) {
@@ -57,7 +71,9 @@ public class OrderController {
                 Claims claims = jwtService.extractClaims(token);
                 String username = claims.getSubject();
 
-                if (!username.equals(customerId)) {
+                // Get customer ID from username
+                Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+                if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().equals(customerId)) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "You can only access your own orders"));
                 }
@@ -97,7 +113,9 @@ public class OrderController {
                 Claims claims = jwtService.extractClaims(token);
                 String username = claims.getSubject();
 
-                if (!username.equals(order.getCustomerId())) {
+                // Get customer from username
+                Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+                if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "You can only access your own orders"));
                 }
@@ -136,9 +154,14 @@ public class OrderController {
                 Claims claims = jwtService.extractClaims(token);
                 String username = claims.getSubject();
 
-                orders = orderService.getCustomerOrders(username).stream()
-                        .filter(order -> "confirmed".equals(order.getStatus()) || "partial".equals(order.getStatus()))
-                        .toList();
+                // Get customer ID from username
+                Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+                if (!customerOpt.isPresent()) {
+                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                            .body(Map.of("message", "Customer not found"));
+                }
+                Integer customerId = customerOpt.get().getcustomerId();
+                orders = orderService.getCustomerOngoingOrders(customerId);
             } else {
                 // For admin, get all ongoing orders
                 orders = orderService.getOngoingOrders();
@@ -181,7 +204,9 @@ public class OrderController {
                 Claims claims = jwtService.extractClaims(token);
                 String username = claims.getSubject();
 
-                if (!username.equals(order.getCustomerId())) {
+                // Get customer from username
+                Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+                if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "You can only cancel your own orders"));
                 }
@@ -206,7 +231,9 @@ public class OrderController {
             Claims claims = jwtService.extractClaims(token);
             String username = claims.getSubject();
 
-            if (!username.equals(order.getCustomerId())) {
+            // Get customer from username
+            Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+            if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body(Map.of("message", "You can only update your own orders"));
             }
@@ -223,14 +250,6 @@ public class OrderController {
         }
     }
 
-    private String extractTokenFromRequest(HttpServletRequest request) {
-        String bearerToken = request.getHeader("Authorization");
-        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
-        }
-        throw new RuntimeException("JWT Token is missing or invalid");
-    }
-
     @PostMapping("/{orderId}/update")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<?> updateOrder(@PathVariable Long orderId, @RequestBody Map<String, Object> updates, HttpServletRequest request) {
@@ -242,7 +261,9 @@ public class OrderController {
                 Claims claims = jwtService.extractClaims(token);
                 String username = claims.getSubject();
 
-                if (!username.equals(currentOrder.getCustomerId())) {
+                // Get customer from username
+                Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+                if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(currentOrder.getCustomerId())) {
                     return ResponseEntity.status(HttpStatus.FORBIDDEN)
                             .body(Map.of("message", "You can only update your own orders"));
                 }
@@ -255,12 +276,19 @@ public class OrderController {
                     Double.valueOf(updates.get("additionalRentalCost").toString()) : null;
             String status = updates.get("status") != null ? updates.get("status").toString() : null;
 
-            // You'll need to implement this method in your OrderService
             OrderResponse updatedOrder = orderService.updateOrder(orderId, transportationCost, additionalRentalCost, status);
             return ResponseEntity.ok(updatedOrder);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("message", "Failed to update order: " + e.getMessage()));
         }
+    }
+
+    private String extractTokenFromRequest(HttpServletRequest request) {
+        String bearerToken = request.getHeader("Authorization");
+        if (bearerToken != null && bearerToken.startsWith("Bearer ")) {
+            return bearerToken.substring(7);
+        }
+        throw new RuntimeException("JWT Token is missing or invalid");
     }
 }

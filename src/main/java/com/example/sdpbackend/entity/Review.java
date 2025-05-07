@@ -3,11 +3,8 @@ package com.example.sdpbackend.entity;
 
 import jakarta.persistence.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Table(name = "reviews")
@@ -23,7 +20,7 @@ public class Review {
 
     @ManyToOne
     @JoinColumn(name = "customerID", nullable = false)
-    private Customer customer;
+    private Customer customer;  // Changed from Optional<Customer> to Customer
 
     @PrePersist
     public void prePersist() {
