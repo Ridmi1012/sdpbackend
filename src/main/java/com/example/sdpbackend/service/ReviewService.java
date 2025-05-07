@@ -18,7 +18,6 @@ import java.util.logging.Logger;
 
 @Service
 public class ReviewService {
-
     private static final Logger logger = Logger.getLogger(ReviewService.class.getName());
 
     @Autowired
@@ -29,17 +28,19 @@ public class ReviewService {
 
     public Review saveReview(ReviewRequest reviewRequest, String username) {
         logger.info("Saving review for user: " + username);
-        Customer customer = customerRepository.findByUsername(username);
+        Optional<Customer> customerOptional = customerRepository.findByUsername(username);
 
-        if (customer == null) {
+        if (customerOptional.isEmpty()) {
             logger.warning("Customer not found: " + username);
             return null;
         }
 
+        Customer customer = customerOptional.get();  // Extract the Customer from Optional
+
         Review review = new Review();
         review.setRating(reviewRequest.getRating());
         review.setReviewText(reviewRequest.getReview());
-        review.setCustomer(customer);
+        review.setCustomer(customer);  // Now passing the Customer object directly
 
         return reviewRepository.save(review);
     }

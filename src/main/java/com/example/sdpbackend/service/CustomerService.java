@@ -29,7 +29,7 @@ public class CustomerService {
         return customerRepository.save(customer);
     }
 
-    public Customer findByUsername(String username) {
+    public Optional<Customer> findByUsername(String username) {
         System.out.println("Querying database for user: " + username);
         return customerRepository.findByUsername(username); // Directly returns null if not found
     }
@@ -48,13 +48,15 @@ public class CustomerService {
         return customerRepository.save(customer);
     }
 
-    // Add the missing changePassword method
+    // Fixed changePassword method to work with the Customer object directly
     public boolean changePassword(String username, String currentPassword, String newPassword) {
-        Customer customer = findByUsername(username);
+        Optional<Customer> customerOpt = findByUsername(username);
 
-        if (customer == null) {
+        if (customerOpt.isEmpty()) {
             return false;
         }
+
+        Customer customer = customerOpt.get();
 
         // Check if current password matches
         if (!passwordEncoder.matches(currentPassword, customer.getPassword())) {

@@ -61,7 +61,10 @@ public class Notification {
         private String title;
         private String body;
         private String orderId;
+
+        @Column(name = "`read`") // Escape the reserved keyword
         private boolean read;
+
         private LocalDateTime createdAt;
         private LocalDateTime readAt;
     }

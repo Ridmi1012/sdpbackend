@@ -5,6 +5,7 @@ import com.example.sdpbackend.dto.LoginRequest;
 import com.example.sdpbackend.dto.LoginResponse;
 import com.example.sdpbackend.entity.Admin;
 import com.example.sdpbackend.entity.Customer;
+import com.example.sdpbackend.exception.ResourceNotFoundException;
 import com.example.sdpbackend.service.AdminService;
 import com.example.sdpbackend.service.CustomerService;
 import com.example.sdpbackend.service.JWTService;
@@ -12,6 +13,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Optional;
 
 
 @RestController
@@ -42,25 +44,30 @@ public class LoginController {
 
         System.out.println("Username: " + username);  // Log the received username
         System.out.println("Password: " + password);
-
         System.out.println("Trying to authenticate user: " + username); // Log the username being checked
 
-        // Find customer
-        Customer customer = customerService.findByUsername(username);
-        if (customer != null) {
-            System.out.println("Found customer: " + customer.getUsername()); // Log the customer found
-            if (passwordEncoder.matches(password, customer.getPassword())) {
-                String token = jwtService.generateToken(customer.getUsername(), "CUSTOMER"); // Generate token here
-                LoginResponse response = new LoginResponse("CUSTOMER", token);
-                response.setFirstName(customer.getFirstName());
-                response.setUserId(customer.getcustomerId());
-                return ResponseEntity.ok(response);
-            } else {
-                System.out.println("Password mismatch for customer: " + username); // Log password mismatch
+        // Try to find customer
+        try {
+            Optional<Customer> customerOpt = customerService.findByUsername(username);
+            if (customerOpt.isPresent()) {
+                Customer customer = customerOpt.get();
+                System.out.println("Found customer: " + customer.getUsername()); // Log the customer found
+                if (passwordEncoder.matches(password, customer.getPassword())) {
+                    String token = jwtService.generateToken(customer.getUsername(), "CUSTOMER"); // Generate token here
+                    LoginResponse response = new LoginResponse("CUSTOMER", token);
+                    response.setFirstName(customer.getFirstName());
+                    response.setUserId(customer.getcustomerId());
+                    return ResponseEntity.ok(response);
+                } else {
+                    System.out.println("Password mismatch for customer: " + username); // Log password mismatch
+                }
             }
+        } catch (ResourceNotFoundException e) {
+            System.out.println("Customer not found: " + username); // Log the customer not found
+            // Continue to check for admin
         }
 
-        // Find admin
+        // Try to find admin
         Admin admin = adminService.findByUsername(username);
         if (admin != null) {
             System.out.println("Found admin: " + admin.getUsername()); // Log the admin found

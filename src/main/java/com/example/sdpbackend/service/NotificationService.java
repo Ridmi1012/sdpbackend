@@ -1,12 +1,15 @@
 package com.example.sdpbackend.service;
 
+import com.example.sdpbackend.entity.Event;
 import com.example.sdpbackend.entity.Notification;
 import com.example.sdpbackend.entity.Order;
+import com.example.sdpbackend.entity.Payment;
 import com.example.sdpbackend.repository.NotificationRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -15,119 +18,54 @@ import java.util.Map;
 
 @Service
 public class NotificationService {
-    @Autowired
-    private NotificationRepository notificationRepository;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    // Store subscription information for a user
-    public void saveSubscription(String username, Map<String, Object> subscriptionData) {
-        try {
-            // Convert subscription data to JSON string
-            String subscriptionJson = objectMapper.writeValueAsString(subscriptionData.get("subscription"));
-
-            // Find existing notification preferences for user or create new
-            Notification notification = notificationRepository.findByUsername(username)
-                    .orElse(new Notification());
-
-            notification.setUsername(username);
-            notification.setSubscription(subscriptionJson);
-            notification.setUpdatedAt(LocalDateTime.now());
-
-            notificationRepository.save(notification);
-        } catch (IOException e) {
-            throw new RuntimeException("Error processing subscription data", e);
-        }
-    }
-
-    // Send a test notification to verify subscription works
-    @Async
-    public void sendTestNotification(String username) {
-        Notification notification = notificationRepository.findByUsername(username)
-                .orElseThrow(() -> new RuntimeException("No subscription found for user: " + username));
-
-        // In a real implementation, this would send a push notification
-        // For now, we'll just log it
-        System.out.println("Sending test notification to user: " + username);
-    }
-
-    // Create a notification for a new order
-    @Async
+    /**
+     * Create notification when a new order is placed
+     */
     public void createOrderNotification(Order order) {
-        // Create notification for all admin users
-        List<Notification> adminNotifications = notificationRepository.findByUserType("ADMIN");
-
-        for (Notification adminNotification : adminNotifications) {
-            // Create a new notification record
-            Notification.NotificationRecord record = new Notification.NotificationRecord();
-            record.setType("new-order");
-            record.setTitle("New Order Request");
-            record.setBody("Order #" + order.getOrderNumber() + " received from " +
-                    order.getFirstName() + " " + order.getLastName());
-            record.setOrderId(order.getId().toString());
-            record.setRead(false);
-            record.setCreatedAt(LocalDateTime.now());
-
-            // Add to notification records
-            adminNotification.getNotificationRecords().add(record);
-            adminNotification.setUpdatedAt(LocalDateTime.now());
-
-            // Save notification
-            notificationRepository.save(adminNotification);
-
-            // In a real implementation, this would also send a push notification
-            // to the admin's browser using the subscription
-            System.out.println("New order notification created for admin: " + adminNotification.getUsername());
-        }
+        // Implementation for creating order notification
+        // This would typically send an in-app notification, email, or SMS
+        System.out.println("New order notification created for order: " + order.getOrderNumber());
     }
 
-    // Get count of unread notifications
-    public int getUnreadNotificationsCount(String username) {
-        return notificationRepository.findByUsername(username)
-                .map(notification -> (int) notification.getNotificationRecords().stream()
-                        .filter(record -> !record.isRead())
-                        .count())
-                .orElse(0);
+    /**
+     * Create notification when a payment is made
+     */
+    public void createPaymentNotification(Order order, Payment payment) {
+        // Implementation for creating payment notification
+        System.out.println("Payment notification created for order: " + order.getOrderNumber() +
+                ", amount: " + payment.getAmount());
     }
 
-    // Mark a specific notification as read
-    public void markNotificationAsRead(String username, String orderId) {
-        notificationRepository.findByUsername(username).ifPresent(notification -> {
-            boolean updated = false;
-
-            for (Notification.NotificationRecord record : notification.getNotificationRecords()) {
-                if (record.getOrderId().equals(orderId) && !record.isRead()) {
-                    record.setRead(true);
-                    record.setReadAt(LocalDateTime.now());
-                    updated = true;
-                }
-            }
-
-            if (updated) {
-                notification.setUpdatedAt(LocalDateTime.now());
-                notificationRepository.save(notification);
-            }
-        });
+    /**
+     * Create notification when a payment slip is uploaded
+     */
+    public void createPaymentSlipNotification(Order order, Payment payment) {
+        // Implementation for creating payment slip notification
+        System.out.println("Payment slip notification created for order: " + order.getOrderNumber() +
+                ", amount: " + payment.getAmount());
     }
 
-    // Mark all notifications as read
-    public void markAllNotificationsAsRead(String username) {
-        notificationRepository.findByUsername(username).ifPresent(notification -> {
-            boolean updated = false;
+    /**
+     * Create notification when a payment is verified
+     */
+    public void createPaymentVerificationNotification(Order order, Payment payment, boolean isApproved) {
+        // Implementation for creating payment verification notification
+        String status = isApproved ? "approved" : "rejected";
+        System.out.println("Payment verification notification created for order: " + order.getOrderNumber() +
+                ", amount: " + payment.getAmount() + ", status: " + status);
+    }
 
-            for (Notification.NotificationRecord record : notification.getNotificationRecords()) {
-                if (!record.isRead()) {
-                    record.setRead(true);
-                    record.setReadAt(LocalDateTime.now());
-                    updated = true;
-                }
-            }
-
-            if (updated) {
-                notification.setUpdatedAt(LocalDateTime.now());
-                notificationRepository.save(notification);
-            }
-        });
+    /**
+     * Create notification when an event is created from an order
+     */
+    public void createEventNotification(Order order, Event event) {
+        // Implementation for creating event notification
+        System.out.println("Event notification created for order: " + order.getOrderNumber() +
+                ", event date: " + event.getEventDate());
     }
 }
+
+
+
+
