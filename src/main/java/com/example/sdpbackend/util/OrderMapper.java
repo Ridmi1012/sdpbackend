@@ -19,7 +19,7 @@ public class OrderMapper {
         // Map basic order fields
         response.set_id(order.getId().toString());
         response.setOrderNumber(order.getOrderNumber());
-        response.setDesignId(order.getDesignId());
+        response.setDesignId(String.valueOf(order.getDesignId()));
         response.setOrderType(order.getOrderType());
         response.setStatus(order.getStatus());
         response.setCustomerId(order.getCustomer().getcustomerId().toString());
@@ -74,7 +74,7 @@ public class OrderMapper {
         Order order = new Order();
 
         // Set basic order properties
-        order.setDesignId(request.getDesignId());
+        order.setDesignId(Long.valueOf(request.getDesignId()));
         order.setOrderType(request.getOrderType());
         order.setCustomer(customer);
         order.setStatus(request.getStatus() != null ? request.getStatus() : "pending");

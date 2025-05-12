@@ -15,15 +15,18 @@ public class PaymentResponse {
     private Long orderId;
     private String orderNumber;
     private String customerName;
-    private String eventDate; // Using String instead of LocalDateTime to avoid parsing issues
+    private String eventDate;
     private Double amount;
     private String paymentType; // 'full' or 'partial'
+    private String method; // 'payhere' or 'bank-transfer'
     private String slipUrl; // Same as paymentSlipUrl
-    private String slipThumbnail; // Optional thumbnail version
     private String notes;
     private String submittedDate; // Using String format
-    private String status; // 'pending', 'verified', 'rejected'
+    private String status; // 'pending', 'completed', 'rejected'
     private String verifiedDate;
     private String verifiedBy;
     private String rejectionReason;
+    private Integer installmentNumber;
+    private Double remainingAmount;
+    private Boolean isActive; // Added to track current payment
 }

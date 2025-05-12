@@ -9,26 +9,11 @@ import java.util.List;
 
 @Repository
 public interface EventRepository extends JpaRepository<Event, Long> {
-
-    List<Event> findByEventDate(LocalDate date);
-
-    List<Event> findByEventDateBetween(LocalDate startDate, LocalDate endDate);
-
-    List<Event> findByCustomerId(String customerId);
-
     List<Event> findByOrderId(Long orderId);
-
-    List<Event> findByStatus(String status);
-
-    // Find today's events - useful for dashboard
-    List<Event> findByEventDateAndStatus(LocalDate date, String status);
-
-    // Count today's events - useful for notifications
+    List<Event> findByCustomerId(String customerId);
+    List<Event> findByEventDate(LocalDate date);
     long countByEventDate(LocalDate date);
-
-    // Find upcoming events
+    List<Event> findByEventDateBetween(LocalDate startDate, LocalDate endDate);
     List<Event> findByEventDateGreaterThanEqualOrderByEventDate(LocalDate date);
-
-    // Find past events
-    List<Event> findByEventDateLessThanOrderByEventDateDesc(LocalDate date);
+    List<Event> findByIsFullyPaid(Boolean isFullyPaid);
 }

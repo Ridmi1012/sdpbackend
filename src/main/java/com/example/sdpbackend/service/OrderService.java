@@ -47,14 +47,14 @@ public class OrderService {
 
         // Set basic order properties
         order.setOrderNumber(generateOrderNumber());
-        order.setDesignId(orderRequest.getDesignId());
+        order.setDesignId(Long.valueOf(orderRequest.getDesignId()));
         order.setOrderType(orderRequest.getOrderType());
         order.setCustomer(customer);
         order.setStatus(orderRequest.getStatus() != null ? orderRequest.getStatus() : "pending");
 
         // For as-is orders, fetch the base price from the design
         if ("as-is".equals(order.getOrderType())) {
-            Long designId = Long.parseLong(order.getDesignId());
+            Long designId = Long.parseLong(String.valueOf(order.getDesignId()));
             Design design = designRepository.findById(Math.toIntExact(designId))
                     .orElseThrow(() -> new RuntimeException("Design not found with id: " + designId));
             order.setBasePrice(design.getBasePrice().doubleValue());
@@ -149,7 +149,7 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
 
         // Create an event for this confirmed order
-        eventService.createEventFromOrder(savedOrder);
+        eventService.createOrUpdateEventFromOrder(savedOrder, true);
 
         return orderMapper.toResponse(savedOrder);
     }
