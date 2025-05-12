@@ -9,8 +9,9 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 public class PaymentSlipRequest {
     private String imageUrl;
-    private String publicId;
     private Double amount;
     private Boolean isPartialPayment;
+    private Integer installmentPlanId;
+    private Integer installmentNumber;
     private String notes;
 }

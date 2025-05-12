@@ -14,33 +14,43 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 public class Payment {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+        @Id
+        @GeneratedValue(strategy = GenerationType.IDENTITY)
+        private Long id;
 
-    @Column(nullable = false)
-    private Double amount;  // Keep only one amount field
+        @Column(nullable = false)
+        private Double amount;
 
-    @Column(nullable = false)
-    private String method; // 'payhere', 'bank-transfer', 'online-transfer'
+        @Column(nullable = false)
+        private String method; // 'payhere', 'bank-transfer', 'online-transfer'
 
-    private String transactionId;
-    private LocalDateTime paymentDateTime;
-    private Double remainingAmount;
-    private String status; // 'pending', 'completed', 'failed', 'refunded'
+        private String status; // 'pending', 'completed', 'rejected'
+        private String rejectionReason;
+        private String transactionId;
+        private LocalDateTime paymentDateTime;
+        private Double remainingAmount;
 
-    @Column(columnDefinition = "TEXT")
-    private String paymentSlipUrl;
+        @Column(columnDefinition = "TEXT")
+        private String paymentSlipUrl;
 
-    private Boolean isPartialPayment;
-    private LocalDateTime confirmationDateTime;
+        private Boolean isPartialPayment;
+        private LocalDateTime confirmationDateTime;
 
-    @ManyToOne
-    @JoinColumn(name = "order_id", nullable = false)
-    private Order order;
+        // Fields for installment tracking
+        private Integer installmentPlanId;
+        private Integer installmentNumber;
+        private String notes;
 
-    @PrePersist
-    protected void onCreate() {
-        paymentDateTime = LocalDateTime.now();
+        // New field to track active/latest payment for an order
+        private Boolean isActive = false;
+
+        @ManyToOne
+        @JoinColumn(name = "order_id", nullable = false)
+        private Order order;
+
+        @PrePersist
+        protected void onCreate() {
+            paymentDateTime = LocalDateTime.now();
+        }
     }
-}
+

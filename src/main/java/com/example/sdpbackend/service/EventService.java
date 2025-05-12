@@ -5,6 +5,8 @@ import com.example.sdpbackend.entity.EventDetails;
 import com.example.sdpbackend.entity.Order;
 import com.example.sdpbackend.repository.EventRepository;
 import com.example.sdpbackend.repository.OrderRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,6 +18,13 @@ import java.util.List;
 
 @Service
 public class EventService {
+    private static final Logger logger = LoggerFactory.getLogger(EventService.class);
+
+    // Define colors for different payment statuses
+    private static final String COLOR_FULLY_PAID = "#4CAF50";  // Green
+    private static final String COLOR_PARTIAL_PAID = "#FFC107"; // Amber
+    private static final String COLOR_PENDING = "#F44336";      // Red
+    private static final String COLOR_CANCELLED = "#9E9E9E";    // Grey
 
     @Autowired
     private EventRepository eventRepository;
@@ -26,34 +35,30 @@ public class EventService {
     @Autowired
     private NotificationService notificationService;
 
-    public List<Event> getAllEvents() {
-        return eventRepository.findAll();
-    }
-
-    public List<Event> getEventsByDateRange(LocalDate startDate, LocalDate endDate) {
-        return eventRepository.findByEventDateBetween(startDate, endDate);
-    }
-
-    public List<Event> getTodayEvents() {
-        return eventRepository.findByEventDate(LocalDate.now());
-    }
-
-    public List<Event> getCustomerEvents(String customerId) {
-        return eventRepository.findByCustomerId(customerId);
-    }
-
-    public Event getEventById(Long eventId) {
-        return eventRepository.findById(eventId)
-                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
-    }
-
+    /**
+     * Create or update an event based on order information and payment status
+     * @param order The order to create/update an event for
+     * @param isFullyPaid Whether the order is fully paid
+     */
     @Transactional
-    public Event createEventFromOrder(Order order) {
+    public void createOrUpdateEventFromOrder(Order order, boolean isFullyPaid) {
+        logger.info("Creating or updating event for order ID: {}, fully paid: {}", order.getId(), isFullyPaid);
+
         // Check if event already exists for this order
         List<Event> existingEvents = eventRepository.findByOrderId(order.getId());
+        Event event;
+
         if (!existingEvents.isEmpty()) {
-            // Event already exists, return the first one
-            return existingEvents.get(0);
+            // Update existing event
+            event = existingEvents.get(0);
+            logger.info("Updating existing event with ID: {}", event.getId());
+        } else {
+            // Create new event
+            event = new Event();
+            event.setOrderId(order.getId());
+            event.setCustomerId(order.getCustomer().getcustomerId().toString());
+            event.setStatus("scheduled");
+            logger.info("Creating new event for order ID: {}", order.getId());
         }
 
         // Get event details from the order
@@ -71,6 +76,7 @@ public class EventService {
         } catch (DateTimeParseException e) {
             // Fallback to current date + 7 days if date format is invalid
             eventDate = LocalDate.now().plusDays(7);
+            logger.warn("Invalid event date format for order ID: {}, using fallback date", order.getId());
         }
 
         try {
@@ -83,27 +89,90 @@ public class EventService {
         } catch (DateTimeParseException e) {
             // Fallback to 9 AM if time format is invalid
             eventTime = LocalTime.of(9, 0);
+            logger.warn("Invalid event time format for order ID: {}, using fallback time", order.getId());
         }
 
-        // Create new event
-        Event event = new Event();
-        event.setTitle("Order #" + order.getOrderNumber());
-        event.setDescription("Event for " + eventDetails.getCustomName() + " at " + eventDetails.getVenue());
+        // Update event details
+        String customerName = eventDetails.getCustomName();
+        String venue = eventDetails.getVenue();
+
+        // Set event details based on order info
+        event.setTitle("Order #" + order.getOrderNumber() + (isFullyPaid ? "" : " (Payment Pending)"));
+        event.setDescription("Event for " + customerName + " at " + venue +
+                (isFullyPaid ? "" : " - PAYMENT PENDING"));
         event.setEventDate(eventDate);
         event.setEventTime(eventTime);
-        event.setLocation(eventDetails.getVenue());
-        event.setOrderId(order.getId());
-        event.setCustomerId(order.getCustomer().getcustomerId().toString());
-        event.setStatus("scheduled");
+        event.setLocation(venue);
 
+        // Set payment status and color
+        event.setIsFullyPaid(isFullyPaid);
+
+        if ("cancelled".equals(order.getStatus())) {
+            event.setStatus("cancelled");
+            event.setColor(COLOR_CANCELLED);
+        } else if (isFullyPaid) {
+            event.setColor(COLOR_FULLY_PAID);
+        } else if ("partial".equals(order.getPaymentStatus())) {
+            event.setColor(COLOR_PARTIAL_PAID);
+        } else {
+            event.setColor(COLOR_PENDING);
+        }
+
+        // Save the event
         Event savedEvent = eventRepository.save(event);
+        logger.info("Event saved with ID: {}, payment status: {}, color: {}",
+                savedEvent.getId(), isFullyPaid ? "PAID" : "PENDING", event.getColor());
 
-        // Notify admin about new event
-        notificationService.createEventNotification(order, savedEvent);
-
-        return savedEvent;
+        // Notify admin about event status (only for new events)
+        if (existingEvents.isEmpty()) {
+            try {
+                notificationService.createEventNotification(order, savedEvent);
+                logger.info("Event notification created for order ID: {}", order.getId());
+            } catch (Exception e) {
+                logger.error("Error creating event notification: {}", e.getMessage(), e);
+            }
+        }
     }
 
+    /**
+     * Get all events
+     */
+    public List<Event> getAllEvents() {
+        return eventRepository.findAll();
+    }
+
+    /**
+     * Get events by date range
+     */
+    public List<Event> getEventsByDateRange(LocalDate startDate, LocalDate endDate) {
+        return eventRepository.findByEventDateBetween(startDate, endDate);
+    }
+
+    /**
+     * Get today's events
+     */
+    public List<Event> getTodayEvents() {
+        return eventRepository.findByEventDate(LocalDate.now());
+    }
+
+    /**
+     * Get customer's events
+     */
+    public List<Event> getCustomerEvents(String customerId) {
+        return eventRepository.findByCustomerId(customerId);
+    }
+
+    /**
+     * Get event by ID
+     */
+    public Event getEventById(Long eventId) {
+        return eventRepository.findById(eventId)
+                .orElseThrow(() -> new RuntimeException("Event not found with id: " + eventId));
+    }
+
+    /**
+     * Update an event
+     */
     @Transactional
     public Event updateEvent(Long eventId, Event eventDetails) {
         Event event = getEventById(eventId);
@@ -123,10 +192,22 @@ public class EventService {
         if (eventDetails.getLocation() != null) {
             event.setLocation(eventDetails.getLocation());
         }
+        if (eventDetails.getStatus() != null) {
+            event.setStatus(eventDetails.getStatus());
+        }
+        if (eventDetails.getColor() != null) {
+            event.setColor(eventDetails.getColor());
+        }
+        if (eventDetails.getIsFullyPaid() != null) {
+            event.setIsFullyPaid(eventDetails.getIsFullyPaid());
+        }
 
         return eventRepository.save(event);
     }
 
+    /**
+     * Update event status
+     */
     @Transactional
     public Event updateEventStatus(Long eventId, String status) {
         Event event = getEventById(eventId);
@@ -150,6 +231,29 @@ public class EventService {
         return eventRepository.save(event);
     }
 
+    /**
+     * Update events for all orders with payment status changes
+     */
+    @Transactional
+    public void updateEventsBasedOnPaymentStatus() {
+        logger.info("Updating events based on payment status");
+
+        // Get all orders with confirmed status and events
+        List<Order> ordersWithEvents = orderRepository.findByStatusAndHasEvents("confirmed");
+
+        for (Order order : ordersWithEvents) {
+            try {
+                boolean isFullyPaid = "completed".equals(order.getPaymentStatus());
+                createOrUpdateEventFromOrder(order, isFullyPaid);
+            } catch (Exception e) {
+                logger.error("Error updating event for order ID {}: {}", order.getId(), e.getMessage(), e);
+            }
+        }
+    }
+
+    /**
+     * Check if status is valid
+     */
     private boolean isValidStatus(String status) {
         return "scheduled".equals(status) ||
                 "in-progress".equals(status) ||
@@ -157,12 +261,16 @@ public class EventService {
                 "cancelled".equals(status);
     }
 
-    // Get count of today's events for admin dashboard
+    /**
+     * Get count of today's events
+     */
     public long getTodayEventsCount() {
         return eventRepository.countByEventDate(LocalDate.now());
     }
 
-    // Get upcoming events
+    /**
+     * Get upcoming events
+     */
     public List<Event> getUpcomingEvents() {
         return eventRepository.findByEventDateGreaterThanEqualOrderByEventDate(LocalDate.now());
     }

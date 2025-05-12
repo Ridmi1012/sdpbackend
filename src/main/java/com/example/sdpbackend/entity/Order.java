@@ -24,33 +24,39 @@ public class Order {
     private String orderNumber;
 
     @Column(nullable = false)
-    private String designId;
+    private String orderType; // 'as-is', 'custom-design', 'custom-request'
 
     @Column(nullable = false)
-    private String orderType; // 'as-is', 'custom-design', etc.
+    private String status; // 'pending', 'confirmed', 'cancelled', 'completed'
 
-    // Event details moved to a separate table EventDetails
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-    private EventDetails eventDetails;
-
-    // Customer relationship with proper FK
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
     private Customer customer;
 
-    // Order status and payment info
     @Column(nullable = false)
-    private String status; // 'pending', 'viewed', 'confirmed', 'paid', etc.
+    private Long designId;
+
+    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
+    private EventDetails eventDetails;
 
     private Double basePrice;
     private Double transportationCost;
     private Double additionalRentalCost;
     private Double totalPrice;
+
+
     private String paymentStatus; // 'pending', 'partial', 'completed'
-    private String cancellationReason;
+
+    // Installment plan fields
+    private Long installmentPlanId;
+    private Integer installmentTotalInstallments;
+    private Integer currentInstallmentNumber = 1;
+    private LocalDateTime nextInstallmentDueDate;
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<Payment> payments = new ArrayList<>();
+
+    private String cancellationReason;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;
@@ -62,6 +68,9 @@ public class Order {
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
+        if (status == null) {
+            status = "pending";
+        }
         if (paymentStatus == null) {
             paymentStatus = "pending";
         }
@@ -71,7 +80,6 @@ public class Order {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 
 }
 
