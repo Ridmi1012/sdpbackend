@@ -1,0 +1,364 @@
+2025-05-12T08:20:08.123+05:30  INFO 19216 --- [sdpbackend] [main] c.e.sdpbackend.SdpbackendApplication     : Starting SdpbackendApplication using Java 20.0.2 with PID 19216 (C:\Users\User\Desktop\SDP\SDPBE\target\classes started by User in C:\Users\User\Desktop\SDP\SDPBE)
+2025-05-12T08:20:08.133+05:30  INFO 19216 --- [sdpbackend] [main] c.e.sdpbackend.SdpbackendApplication     : No active profile set, falling back to 1 default profile: "default"
+2025-05-12T08:20:08.837+05:30  INFO 19216 --- [sdpbackend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Bootstrapping Spring Data JPA repositories in DEFAULT mode.
+2025-05-12T08:20:08.919+05:30  INFO 19216 --- [sdpbackend] [main] .s.d.r.c.RepositoryConfigurationDelegate : Finished Spring Data repository scanning in 74 ms. Found 12 JPA repository interfaces.
+2025-05-12T08:20:09.420+05:30  INFO 19216 --- [sdpbackend] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat initialized with port 8083 (http)
+2025-05-12T08:20:09.433+05:30  INFO 19216 --- [sdpbackend] [main] o.apache.catalina.core.StandardService   : Starting service [Tomcat]
+2025-05-12T08:20:09.433+05:30  INFO 19216 --- [sdpbackend] [main] o.apache.catalina.core.StandardEngine    : Starting Servlet engine: [Apache Tomcat/10.1.39]
+2025-05-12T08:20:09.479+05:30  INFO 19216 --- [sdpbackend] [main] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring embedded WebApplicationContext
+2025-05-12T08:20:09.480+05:30  INFO 19216 --- [sdpbackend] [main] w.s.c.ServletWebServerApplicationContext : Root WebApplicationContext: initialization completed in 1302 ms
+2025-05-12T08:20:10.018+05:30  INFO 19216 --- [sdpbackend] [main] o.s.o.j.p.SpringPersistenceUnitInfo      : No LoadTimeWeaver setup: ignoring JPA class transformer
+2025-05-12T08:20:10.046+05:30  INFO 19216 --- [sdpbackend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Starting...
+2025-05-12T08:20:10.416+05:30  INFO 19216 --- [sdpbackend] [main] com.zaxxer.hikari.pool.HikariPool        : HikariPool-1 - Added connection com.mysql.cj.jdbc.ConnectionImpl@71734463
+2025-05-12T08:20:10.418+05:30  INFO 19216 --- [sdpbackend] [main] com.zaxxer.hikari.HikariDataSource       : HikariPool-1 - Start completed.
+2025-05-12T08:20:11.630+05:30  INFO 19216 --- [sdpbackend] [main] j.LocalContainerEntityManagerFactoryBean : Initialized JPA EntityManagerFactory for persistence unit 'default'
+2025-05-12T08:20:11.990+05:30  INFO 19216 --- [sdpbackend] [main] o.s.d.j.r.query.QueryEnhancerFactory     : Hibernate is in classpath; If applicable, HQL parser will be used.
+2025-05-12T08:20:14.549+05:30  WARN 19216 --- [sdpbackend] [main] JpaBaseConfiguration$JpaWebConfiguration : spring.jpa.open-in-view is enabled by default. Therefore, database queries may be performed during view rendering. Explicitly configure spring.jpa.open-in-view to disable this warning
+2025-05-12T08:20:14.568+05:30  WARN 19216 --- [sdpbackend] [main] .s.s.UserDetailsServiceAutoConfiguration : 
+
+Using generated security password: 671a63ce-71a9-42db-832a-5a3a4e0d7675
+
+This generated password is for development use only. Your security configuration must be updated before running your application in production.
+
+2025-05-12T08:20:14.575+05:30  INFO 19216 --- [sdpbackend] [main] r$InitializeUserDetailsManagerConfigurer : Global AuthenticationManager configured with UserDetailsService bean with name inMemoryUserDetailsManager
+2025-05-12T08:20:15.127+05:30  INFO 19216 --- [sdpbackend] [main] o.s.b.w.embedded.tomcat.TomcatWebServer  : Tomcat started on port 8083 (http) with context path '/'
+2025-05-12T08:20:15.134+05:30  INFO 19216 --- [sdpbackend] [main] c.e.sdpbackend.SdpbackendApplication     : Started SdpbackendApplication in 7.484 seconds (process running for 8.312)
+2025-05-12T08:21:28.085+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] o.a.c.c.C.[Tomcat].[localhost].[/]       : Initializing Spring DispatcherServlet 'dispatcherServlet'
+2025-05-12T08:21:28.086+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] o.s.web.servlet.DispatcherServlet        : Initializing Servlet 'dispatcherServlet'
+2025-05-12T08:21:28.087+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] o.s.web.servlet.DispatcherServlet        : Completed initialization in 1 ms
+2025-05-12T08:21:42.377+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:21:42.378+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:21:48.857+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:21:48.857+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:21:48.857+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:21:48.857+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:22:36.277+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:22:36.277+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:22:38.337+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:22:38.338+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:22:40.770+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:22:40.771+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:22:40.772+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 2
+2025-05-12T08:22:40.780+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 2
+2025-05-12T08:22:40.792+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 2
+2025-05-12T08:22:54.732+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:22:54.732+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:22:54.733+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:22:54.733+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:22:59.459+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:22:59.459+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:22:59.462+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:22:59.462+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:22:59.472+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:22:59.472+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:23:00.669+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:23:00.669+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:23:00.681+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:23:00.681+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:23:13.748+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:23:13.748+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:23:17.796+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:23:17.796+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:23:17.803+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.EventService      : Creating or updating event for order ID: 2, fully paid: true
+2025-05-12T08:23:17.806+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.EventService      : Creating new event for order ID: 2
+2025-05-12T08:23:17.809+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.EventService      : Event saved with ID: 2, payment status: PAID, color: #4CAF50
+2025-05-12T08:23:17.809+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.EventService      : Event notification created for order ID: 2
+2025-05-12T08:23:32.645+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:23:32.645+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:23:33.969+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:23:33.969+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:23:34.987+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:23:34.987+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:23:34.988+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 2
+2025-05-12T08:23:34.995+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 2
+2025-05-12T08:23:34.997+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 2
+2025-05-12T08:23:36.844+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:23:36.844+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:23:36.845+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 2
+2025-05-12T08:23:36.847+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:23:36.847+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:23:36.849+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 2
+2025-05-12T08:23:36.851+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 2
+2025-05-12T08:23:36.854+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 2
+2025-05-12T08:23:36.855+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 2
+2025-05-12T08:23:36.860+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Event is within 10 days - returning only full payment option
+2025-05-12T08:23:36.861+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Successfully fetched 1 installment plans for order ID: 2
+2025-05-12T08:23:59.456+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:23:59.456+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:00.245+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:00.246+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:00.249+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Uploading payment slip for order ID: 2
+2025-05-12T08:24:00.256+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Processing payment slip upload for order ID: 2
+2025-05-12T08:24:00.260+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Created pending payment record with ID: 2
+2025-05-12T08:24:00.260+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Payment slip notification created for admin
+2025-05-12T08:24:00.266+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Payment slip uploaded successfully for order ID: 2
+2025-05-12T08:24:02.368+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:02.368+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:02.382+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:02.382+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:02.383+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 2
+2025-05-12T08:24:02.389+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 2
+2025-05-12T08:24:02.392+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 2
+2025-05-12T08:24:14.321+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:14.321+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:14.322+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:14.322+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:14.324+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:14.325+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:17.357+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:17.357+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:17.357+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:17.357+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:17.371+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Fetching recently verified payments
+2025-05-12T08:24:17.371+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.controller.PaymentController       : Fetching pending verification payments
+2025-05-12T08:24:17.372+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.PaymentService    : Fetching pending payments for verification
+2025-05-12T08:24:17.372+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.sdpbackend.service.PaymentService    : Fetching recently verified payments
+2025-05-12T08:24:17.378+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Successfully fetched 0 recently verified payments
+2025-05-12T08:24:17.381+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.controller.PaymentController       : Successfully fetched 2 pending verification payments
+2025-05-12T08:24:25.883+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:25.883+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:29.465+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:29.466+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:33.922+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:33.922+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:33.925+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Verifying manual payment for order ID: 2, payment ID: 2
+2025-05-12T08:24:33.926+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Verifying manual payment - Order: 2, Payment: 2, Approved: true
+2025-05-12T08:24:33.931+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Payment approved: 2
+2025-05-12T08:24:33.932+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Order payment status updated to 'completed'
+2025-05-12T08:24:33.932+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.EventService      : Creating or updating event for order ID: 2, fully paid: true
+2025-05-12T08:24:33.935+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.EventService      : Updating existing event with ID: 2
+2025-05-12T08:24:33.936+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.EventService      : Event saved with ID: 2, payment status: PAID, color: #4CAF50
+2025-05-12T08:24:33.936+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Event calendar updated with payment status for order: 2
+2025-05-12T08:24:33.936+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Payment verification notification sent to customer
+2025-05-12T08:24:33.943+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Manual payment verification completed for order ID: 2, payment ID: 2, approved: true
+2025-05-12T08:24:33.951+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:33.951+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:24:33.951+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:33.951+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:24:33.952+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : Fetching pending verification payments
+2025-05-12T08:24:33.952+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.controller.PaymentController       : Fetching recently verified payments
+2025-05-12T08:24:33.952+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.sdpbackend.service.PaymentService    : Fetching pending payments for verification
+2025-05-12T08:24:33.952+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.sdpbackend.service.PaymentService    : Fetching recently verified payments
+2025-05-12T08:24:33.956+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.controller.PaymentController       : Successfully fetched 1 recently verified payments
+2025-05-12T08:24:33.956+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : Successfully fetched 1 pending verification payments
+2025-05-12T08:24:46.729+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:46.730+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:49.050+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:49.050+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:50.500+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:50.500+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:24:50.501+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 2
+2025-05-12T08:24:50.507+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 2
+2025-05-12T08:24:50.509+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 2
+2025-05-12T08:24:59.760+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:24:59.760+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:25:28.668+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:25:28.669+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:25:28.670+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:25:28.670+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:25:29.468+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:25:29.468+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:25:59.452+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:25:59.453+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:26:29.456+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:26:29.457+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:26:33.961+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:26:33.961+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:26:36.005+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:26:36.005+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:26:43.557+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:43.558+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:26:43.558+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:43.558+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:26:43.569+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:43.569+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:26:46.464+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:46.464+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:26:47.564+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:47.564+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:26:47.574+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:47.574+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:26:59.463+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:26:59.464+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:27:01.692+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:27:01.692+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:27:06.314+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:27:06.314+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:27:06.319+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.EventService      : Creating or updating event for order ID: 3, fully paid: true
+2025-05-12T08:27:06.320+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.EventService      : Creating new event for order ID: 3
+2025-05-12T08:27:06.321+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.EventService      : Event saved with ID: 3, payment status: PAID, color: #4CAF50
+2025-05-12T08:27:06.321+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.EventService      : Event notification created for order ID: 3
+2025-05-12T08:27:18.255+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:18.256+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:19.814+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:19.815+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:28.743+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:28.743+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:28.744+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:27:28.750+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:27:28.752+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:27:29.453+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:29.453+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:30.444+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:30.444+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:30.445+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:27:30.446+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:30.446+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:30.447+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 3
+2025-05-12T08:27:30.450+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:27:30.452+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:27:30.452+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 3
+2025-05-12T08:27:30.456+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.sdpbackend.service.PaymentService    : Event is more than 10 days away - returning all installment plans
+2025-05-12T08:27:30.456+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Successfully fetched 4 installment plans for order ID: 3
+2025-05-12T08:27:34.660+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:27:34.660+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:27:34.663+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Initiating PayHere payment for order ID: 3
+2025-05-12T08:27:34.670+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : Initiating PayHere payment for order ID: 3
+2025-05-12T08:27:34.670+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : Building PayHere parameters for order ID: 3
+2025-05-12T08:27:34.835+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : PayHere parameters built successfully
+2025-05-12T08:27:34.836+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : PayHere payment initiated successfully for order ID: 3
+2025-05-12T08:28:54.033+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:28:54.033+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:28:56.722+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:28:56.722+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:28:56.723+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:28:56.727+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:28:56.729+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:28:58.664+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:28:58.664+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:28:58.664+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:28:58.664+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:28:58.665+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 3
+2025-05-12T08:28:58.665+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:28:58.670+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:28:58.670+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 3
+2025-05-12T08:28:58.672+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:28:58.673+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Event is more than 10 days away - returning all installment plans
+2025-05-12T08:28:58.673+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Successfully fetched 4 installment plans for order ID: 3
+2025-05-12T08:29:12.241+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:12.241+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:12.242+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : Initiating PayHere payment for order ID: 3
+2025-05-12T08:29:12.250+05:30 ERROR 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : Error parsing event date/time: Text '2025-06-01' could not be parsed at index 10
+2025-05-12T08:29:12.251+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.sdpbackend.service.PaymentService    : Initiating PayHere payment for order ID: 3
+2025-05-12T08:29:12.252+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.sdpbackend.service.PaymentService    : Building PayHere parameters for order ID: 3
+2025-05-12T08:29:12.252+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.sdpbackend.service.PaymentService    : PayHere parameters built successfully
+2025-05-12T08:29:12.253+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : PayHere payment initiated successfully for order ID: 3
+2025-05-12T08:29:21.973+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:21.974+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:23.489+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:23.490+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:23.490+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:29:23.495+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:29:23.496+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:29:25.111+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:25.111+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:25.112+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:25.112+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:25.112+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 3
+2025-05-12T08:29:25.112+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:29:25.118+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:29:25.118+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 3
+2025-05-12T08:29:25.120+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-4] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:29:25.122+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Event is more than 10 days away - returning all installment plans
+2025-05-12T08:29:25.122+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Successfully fetched 4 installment plans for order ID: 3
+2025-05-12T08:29:48.227+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:48.227+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:48.228+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Uploading payment slip for order ID: 3
+2025-05-12T08:29:48.234+05:30 ERROR 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Error parsing event date/time: Text '2025-06-01' could not be parsed at index 10
+2025-05-12T08:29:48.235+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Processing payment slip upload for order ID: 3
+2025-05-12T08:29:48.238+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Created pending payment record with ID: 3
+2025-05-12T08:29:48.238+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Payment slip notification created for admin
+2025-05-12T08:29:48.242+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Payment slip uploaded successfully for order ID: 3
+2025-05-12T08:29:50.338+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:50.339+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:50.351+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:29:50.351+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:29:50.352+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:29:50.357+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:29:50.359+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:30:01.201+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:01.201+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:01.202+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:01.202+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:04.649+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:04.649+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:04.649+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:04.649+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:04.649+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Fetching recently verified payments
+2025-05-12T08:30:04.649+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Fetching pending verification payments
+2025-05-12T08:30:04.650+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.sdpbackend.service.PaymentService    : Fetching recently verified payments
+2025-05-12T08:30:04.650+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.sdpbackend.service.PaymentService    : Fetching pending payments for verification
+2025-05-12T08:30:04.653+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-8] c.e.s.controller.PaymentController       : Successfully fetched 1 recently verified payments
+2025-05-12T08:30:04.654+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Successfully fetched 2 pending verification payments
+2025-05-12T08:30:11.762+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:11.762+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:11.763+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Verifying manual payment for order ID: 3, payment ID: 3
+2025-05-12T08:30:11.764+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Verifying manual payment - Order: 3, Payment: 3, Approved: true
+2025-05-12T08:30:11.767+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Payment approved: 3
+2025-05-12T08:30:11.767+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Order payment status updated to 'partial'
+2025-05-12T08:30:11.767+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.EventService      : Creating or updating event for order ID: 3, fully paid: false
+2025-05-12T08:30:11.770+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.EventService      : Updating existing event with ID: 3
+2025-05-12T08:30:11.770+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.EventService      : Event saved with ID: 3, payment status: PENDING, color: #FFC107
+2025-05-12T08:30:11.770+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Event calendar updated with payment status for order: 3
+2025-05-12T08:30:11.771+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Payment verification notification sent to customer
+2025-05-12T08:30:11.778+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Manual payment verification completed for order ID: 3, payment ID: 3, approved: true
+2025-05-12T08:30:11.786+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:11.786+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: rid123 with role: ADMIN
+2025-05-12T08:30:11.787+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:11.787+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: rid123 with role: ROLE_ADMIN
+2025-05-12T08:30:11.787+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : Fetching pending verification payments
+2025-05-12T08:30:11.787+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Fetching recently verified payments
+2025-05-12T08:30:11.787+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.sdpbackend.service.PaymentService    : Fetching pending payments for verification
+2025-05-12T08:30:11.787+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.sdpbackend.service.PaymentService    : Fetching recently verified payments
+2025-05-12T08:30:11.790+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-3] c.e.s.controller.PaymentController       : Successfully fetched 1 pending verification payments
+2025-05-12T08:30:11.791+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Successfully fetched 2 recently verified payments
+2025-05-12T08:30:27.264+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:30:27.264+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:30:29.467+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:30:29.467+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:30:29.468+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:30:29.473+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:30:29.475+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:30:33.764+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:30:33.764+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:30:33.765+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:30:33.765+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:30:33.765+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:30:33.765+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 3
+2025-05-12T08:30:33.770+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 3
+2025-05-12T08:30:33.770+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:30:33.772+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:30:33.773+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.sdpbackend.service.PaymentService    : Event is more than 10 days away - returning all installment plans
+2025-05-12T08:30:33.773+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-7] c.e.s.controller.PaymentController       : Successfully fetched 4 installment plans for order ID: 3
+2025-05-12T08:31:34.867+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:31:34.867+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:31:34.868+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:31:34.873+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:31:34.875+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-5] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:31:43.260+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:31:43.260+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:31:43.260+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:31:43.260+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:31:43.261+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 3
+2025-05-12T08:31:43.261+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:31:43.266+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 3
+2025-05-12T08:31:43.266+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:31:43.268+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-10] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:31:43.269+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.sdpbackend.service.PaymentService    : Event is more than 10 days away - returning all installment plans
+2025-05-12T08:31:43.269+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-6] c.e.s.controller.PaymentController       : Successfully fetched 4 installment plans for order ID: 3
+2025-05-12T08:40:33.972+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:40:33.972+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:40:33.973+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:40:33.979+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:40:33.981+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-2] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:40:35.779+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:40:35.779+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Processing token for user: lals123 with role: CUSTOMER
+2025-05-12T08:40:35.780+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:40:35.780+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.config.JwtAuthenticationFilter     : Authenticated user: lals123 with role: ROLE_CUSTOMER
+2025-05-12T08:40:35.781+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.controller.PaymentController       : Fetching available installment plans for order ID: 3
+2025-05-12T08:40:35.781+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Fetching payment summary for order ID: 3
+2025-05-12T08:40:35.786+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.sdpbackend.service.PaymentService    : Getting available installment plans for order ID: 3
+2025-05-12T08:40:35.786+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.sdpbackend.service.PaymentService    : Calculating payment summary for order ID: 3
+2025-05-12T08:40:35.788+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-1] c.e.s.controller.PaymentController       : Successfully fetched payment summary for order ID: 3
+2025-05-12T08:40:35.789+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.sdpbackend.service.PaymentService    : Event is more than 10 days away - returning all installment plans
+2025-05-12T08:40:35.789+05:30  INFO 19216 --- [sdpbackend] [http-nio-8083-exec-9] c.e.s.controller.PaymentController       : Successfully fetched 4 installment plans for order ID: 3
