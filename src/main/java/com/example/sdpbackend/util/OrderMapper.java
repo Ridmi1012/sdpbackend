@@ -6,12 +6,17 @@ import com.example.sdpbackend.dto.OrderResponse;
 import com.example.sdpbackend.entity.Customer;
 import com.example.sdpbackend.entity.EventDetails;
 import com.example.sdpbackend.entity.Order;
+import com.example.sdpbackend.entity.OrderItem;
 import org.springframework.stereotype.Component;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class OrderMapper {
     /**
      * Convert Order entity to OrderResponse DTO
+     * MODIFIED - Added mapping for request-similar fields
      */
     public OrderResponse toResponse(Order order) {
         OrderResponse response = new OrderResponse();
@@ -31,6 +36,18 @@ public class OrderMapper {
         response.setCancellationReason(order.getCancellationReason());
         response.setCreatedAt(order.getCreatedAt());
         response.setUpdatedAt(order.getUpdatedAt());
+
+        // NEW - Map request-similar specific fields
+        response.setThemeColor(order.getThemeColor());
+        response.setConceptCustomization(order.getConceptCustomization());
+
+        // NEW - Map order items for request-similar orders
+        if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
+            List<OrderResponse.OrderItemResponse> itemResponses = order.getOrderItems().stream()
+                    .map(this::toOrderItemResponse)
+                    .collect(Collectors.toList());
+            response.setOrderItems(itemResponses);
+        }
 
         // Map event details if available
         if (order.getEventDetails() != null) {
@@ -68,7 +85,24 @@ public class OrderMapper {
     }
 
     /**
+     * NEW - Convert OrderItem entity to OrderItemResponse
+     */
+    private OrderResponse.OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
+        OrderResponse.OrderItemResponse response = new OrderResponse.OrderItemResponse();
+        response.setId(orderItem.getId());
+        response.setItemId(orderItem.getItemId());
+        response.setItemName(orderItem.getItemName());
+        response.setItemCategory(orderItem.getItemCategory());
+        response.setQuantity(orderItem.getQuantity());
+        response.setPricePerUnit(orderItem.getPricePerUnit());
+        response.setTotalPrice(orderItem.getTotalPrice());
+        response.setStatus(orderItem.getStatus());
+        return response;
+    }
+
+    /**
      * Convert OrderRequest DTO to Order entity (for creation)
+     * MODIFIED - Added handling for request-similar fields
      */
     public Order toEntity(OrderRequest request, Customer customer) {
         Order order = new Order();
@@ -78,6 +112,12 @@ public class OrderMapper {
         order.setOrderType(request.getOrderType());
         order.setCustomer(customer);
         order.setStatus(request.getStatus() != null ? request.getStatus() : "pending");
+
+        // NEW - Set request-similar specific fields
+        if ("request-similar".equals(request.getOrderType())) {
+            order.setThemeColor(request.getThemeColor());
+            order.setConceptCustomization(request.getConceptCustomization());
+        }
 
         // Create and set event details
         if (request.getCustomDetails() != null) {
@@ -106,6 +146,7 @@ public class OrderMapper {
 
     /**
      * Update an existing Order entity with data from an OrderRequest
+     * MODIFIED - Added handling for request-similar fields
      */
     public Order updateEntityFromRequest(Order order, OrderRequest request) {
         // Only update fields that are present in the request
@@ -115,6 +156,16 @@ public class OrderMapper {
 
         if (request.getStatus() != null) {
             order.setStatus(request.getStatus());
+        }
+
+        // NEW - Update request-similar specific fields
+        if ("request-similar".equals(order.getOrderType())) {
+            if (request.getThemeColor() != null) {
+                order.setThemeColor(request.getThemeColor());
+            }
+            if (request.getConceptCustomization() != null) {
+                order.setConceptCustomization(request.getConceptCustomization());
+            }
         }
 
         // Update event details if present

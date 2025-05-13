@@ -24,10 +24,10 @@ public class Order {
     private String orderNumber;
 
     @Column(nullable = false)
-    private String orderType; // 'as-is', 'custom-design', 'custom-request'
+    private String orderType; // 'as-is', 'request-similar' // CHANGED - added request-similar
 
     @Column(nullable = false)
-    private String status; // 'pending', 'confirmed', 'cancelled', 'completed'
+    private String status;
 
     @ManyToOne
     @JoinColumn(name = "customer_id", nullable = false)
@@ -39,15 +39,21 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private EventDetails eventDetails;
 
+    // NEW FIELDS for request-similar scenario
+    private String themeColor;
+    private String conceptCustomization;
+
+    // NEW RELATIONSHIP - Order items for request-similar orders
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    private List<OrderItem> orderItems = new ArrayList<>();
+
     private Double basePrice;
     private Double transportationCost;
     private Double additionalRentalCost;
     private Double totalPrice;
 
+    private String paymentStatus;
 
-    private String paymentStatus; // 'pending', 'partial', 'completed'
-
-    // Installment plan fields
     private Long installmentPlanId;
     private Integer installmentTotalInstallments;
     private Integer currentInstallmentNumber = 1;
@@ -80,7 +86,6 @@ public class Order {
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
     }
-
 }
 
 

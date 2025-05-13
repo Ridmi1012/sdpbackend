@@ -5,6 +5,8 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -18,6 +20,14 @@ public class OrderRequest {
 
     @JsonProperty("customerInfo")
     private CustomerInfo customerInfo;
+
+    // NEW FIELDS for request-similar
+    private String themeColor;
+    private String conceptCustomization;
+
+    // NEW - List of items for request-similar orders
+    @JsonProperty("orderItems")
+    private List<OrderItemRequest> orderItems;
 
     // Inner Classes
     @Data
@@ -42,5 +52,18 @@ public class OrderRequest {
         private String email;
         private String contact;
         private String relationshipToPerson;
+    }
+
+    // NEW INNER CLASS for order items
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class OrderItemRequest {
+        private Long itemId;
+        private String itemName;
+        private String itemCategory;
+        private Integer quantity;
+        private Double pricePerUnit;
+        private String status; // 'active' or 'dropped'
     }
 }

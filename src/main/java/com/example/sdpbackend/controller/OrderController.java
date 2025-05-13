@@ -60,6 +60,63 @@ public class OrderController {
         }
     }
 
+    // NEW - Update order items for request-similar orders
+    @PutMapping("/{orderId}/items")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> updateOrderItems(@PathVariable Long orderId,
+                                              @RequestBody List<OrderRequest.OrderItemRequest> itemRequests,
+                                              HttpServletRequest request) {
+        try {
+            // Verify customer owns this order
+            OrderResponse order = orderService.getOrderById(orderId);
+            String token = extractTokenFromRequest(request);
+            Claims claims = jwtService.extractClaims(token);
+            String username = claims.getSubject();
+
+            Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+            if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "You can only update your own orders"));
+            }
+
+            OrderResponse updatedOrder = orderService.updateOrderItems(orderId, itemRequests);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Failed to update order items: " + e.getMessage()));
+        }
+    }
+
+    // NEW - Update customization for request-similar orders
+    @PatchMapping("/{orderId}/customization")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> updateCustomization(@PathVariable Long orderId,
+                                                 @RequestBody Map<String, String> customizationData,
+                                                 HttpServletRequest request) {
+        try {
+            // Verify customer owns this order
+            OrderResponse order = orderService.getOrderById(orderId);
+            String token = extractTokenFromRequest(request);
+            Claims claims = jwtService.extractClaims(token);
+            String username = claims.getSubject();
+
+            Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+            if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "You can only update your own orders"));
+            }
+
+            String themeColor = customizationData.get("themeColor");
+            String conceptCustomization = customizationData.get("conceptCustomization");
+
+            OrderResponse updatedOrder = orderService.updateCustomization(orderId, themeColor, conceptCustomization);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Failed to update customization: " + e.getMessage()));
+        }
+    }
+
     // Get customer's orders
     @GetMapping("/customer/{customerId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
