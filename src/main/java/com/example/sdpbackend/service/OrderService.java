@@ -64,9 +64,23 @@ public class OrderService {
             // For request-similar orders, set customization fields
             order.setThemeColor(orderRequest.getThemeColor());
             order.setConceptCustomization(orderRequest.getConceptCustomization());
-
-            // Initialize base price to 0 (will be calculated from items)
             order.setBasePrice(0.0);
+        } else if ("full-custom".equals(order.getOrderType())) {
+            // NEW - For full-custom orders
+            order.setThemeColor(orderRequest.getThemeColor());
+            order.setConceptCustomization(orderRequest.getConceptCustomization());
+            order.setSpecialNote(orderRequest.getSpecialNote());
+
+            // Handle inspiration photos (max 3)
+            if (orderRequest.getInspirationPhotos() != null) {
+                List<String> photos = orderRequest.getInspirationPhotos().stream()
+                        .limit(3) // Ensure max 3 photos
+                        .collect(Collectors.toList());
+                order.setInspirationPhotos(photos);
+            }
+
+            order.setBasePrice(0.0);
+            order.setDesignId(0L); // No existing design for full-custom
         }
 
         // Create and populate EventDetails
@@ -93,8 +107,9 @@ public class OrderService {
         // Save the order first to get the ID
         Order savedOrder = orderRepository.save(order);
 
-        // Handle order items for request-similar orders
-        if ("request-similar".equals(order.getOrderType()) && orderRequest.getOrderItems() != null) {
+        // Handle order items for request-similar and full-custom orders
+        if (("request-similar".equals(order.getOrderType()) || "full-custom".equals(order.getOrderType()))
+                && orderRequest.getOrderItems() != null) {
             double totalItemsPrice = 0.0;
             List<OrderItem> orderItems = new ArrayList<>();
 
@@ -121,9 +136,9 @@ public class OrderService {
             orderItemRepository.saveAll(orderItems);
             savedOrder.setOrderItems(orderItems);
 
-            // IMPORTANT: Update and save the base price
+            // Update and save the base price
             savedOrder.setBasePrice(totalItemsPrice);
-            savedOrder = orderRepository.save(savedOrder); // Save again to persist the base price
+            savedOrder = orderRepository.save(savedOrder);
         }
 
         // Send notification to admin about new order
@@ -137,8 +152,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
 
-        if (!"request-similar".equals(order.getOrderType())) {
-            throw new OrderException("Order items can only be updated for request-similar orders");
+        if (!"request-similar".equals(order.getOrderType()) && !"full-custom".equals(order.getOrderType())) {
+            throw new OrderException("Order items can only be updated for request-similar or full-custom orders");
         }
 
         // Clear existing items
@@ -188,8 +203,8 @@ public class OrderService {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
 
-        if (!"request-similar".equals(order.getOrderType())) {
-            throw new OrderException("Customization can only be updated for request-similar orders");
+        if (!"request-similar".equals(order.getOrderType()) && !"full-custom".equals(order.getOrderType())) {
+            throw new OrderException("Customization can only be updated for request-similar or full-custom orders");
         }
 
         if (themeColor != null) {
@@ -305,7 +320,6 @@ public class OrderService {
     }
 
     private String generateOrderNumber() {
-        // Generate a unique order number with format: ORD-YYYYMMDD-XXXX
         LocalDateTime now = LocalDateTime.now();
         String datePrefix = now.format(DateTimeFormatter.ofPattern("yyyyMMdd"));
         String randomSuffix = String.format("%04d", random.nextInt(10000));
@@ -341,5 +355,41 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         return orderMapper.toResponse(savedOrder);
     }
+
+    // NEW METHOD - Update inspiration photos for full-custom orders
+    @Transactional
+    public OrderResponse updateInspirationPhotos(Long orderId, List<String> photoUrls) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
+
+        if (!"full-custom".equals(order.getOrderType())) {
+            throw new OrderException("Inspiration photos can only be updated for full-custom orders");
+        }
+
+        // Ensure max 3 photos
+        List<String> limitedPhotos = photoUrls.stream()
+                .limit(3)
+                .collect(Collectors.toList());
+
+        order.setInspirationPhotos(limitedPhotos);
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toResponse(savedOrder);
+    }
+
+    // NEW METHOD - Update special note for full-custom orders
+    @Transactional
+    public OrderResponse updateSpecialNote(Long orderId, String specialNote) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
+
+        if (!"full-custom".equals(order.getOrderType())) {
+            throw new OrderException("Special note can only be updated for full-custom orders");
+        }
+
+        order.setSpecialNote(specialNote);
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toResponse(savedOrder);
+    }
 }
+
 

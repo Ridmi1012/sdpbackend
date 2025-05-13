@@ -34,6 +34,7 @@ public class OrderController {
     private JWTService jwtService;
 
     // Create a new order (customers only)
+    // Create a new order (customers only)
     @PostMapping
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<?> createOrder(@RequestBody OrderRequest orderRequest, HttpServletRequest request) {
@@ -60,7 +61,6 @@ public class OrderController {
         }
     }
 
-    // NEW - Update order items for request-similar orders
     @PutMapping("/{orderId}/items")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<?> updateOrderItems(@PathVariable Long orderId,
@@ -87,7 +87,7 @@ public class OrderController {
         }
     }
 
-    // NEW - Update customization for request-similar orders
+    // NEW - Update customization for request-similar and full-custom orders
     @PatchMapping("/{orderId}/customization")
     @PreAuthorize("hasRole('CUSTOMER')")
     public ResponseEntity<?> updateCustomization(@PathVariable Long orderId,
@@ -114,6 +114,61 @@ public class OrderController {
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
                     .body(Map.of("message", "Failed to update customization: " + e.getMessage()));
+        }
+    }
+
+    @PatchMapping("/{orderId}/inspiration-photos")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> updateInspirationPhotos(@PathVariable Long orderId,
+                                                     @RequestBody Map<String, List<String>> photosData,
+                                                     HttpServletRequest request) {
+        try {
+            // Verify customer owns this order
+            OrderResponse order = orderService.getOrderById(orderId);
+            String token = extractTokenFromRequest(request);
+            Claims claims = jwtService.extractClaims(token);
+            String username = claims.getSubject();
+
+            Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+            if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "You can only update your own orders"));
+            }
+
+            List<String> photoUrls = photosData.get("inspirationPhotos");
+            OrderResponse updatedOrder = orderService.updateInspirationPhotos(orderId, photoUrls);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Failed to update inspiration photos: " + e.getMessage()));
+        }
+    }
+
+    // NEW - Update special note for full-custom orders
+    @PatchMapping("/{orderId}/special-note")
+    @PreAuthorize("hasRole('CUSTOMER')")
+    public ResponseEntity<?> updateSpecialNote(@PathVariable Long orderId,
+                                               @RequestBody Map<String, String> noteData,
+                                               HttpServletRequest request) {
+        try {
+            // Verify customer owns this order
+            OrderResponse order = orderService.getOrderById(orderId);
+            String token = extractTokenFromRequest(request);
+            Claims claims = jwtService.extractClaims(token);
+            String username = claims.getSubject();
+
+            Optional<Customer> customerOpt = customerRepository.findByUsername(username);
+            if (!customerOpt.isPresent() || !customerOpt.get().getcustomerId().toString().equals(order.getCustomerId())) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "You can only update your own orders"));
+            }
+
+            String specialNote = noteData.get("specialNote");
+            OrderResponse updatedOrder = orderService.updateSpecialNote(orderId, specialNote);
+            return ResponseEntity.ok(updatedOrder);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", "Failed to update special note: " + e.getMessage()));
         }
     }
 
@@ -144,7 +199,6 @@ public class OrderController {
         }
     }
 
-    // Get all orders (admin only)
     @GetMapping
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getAllOrders() {
@@ -157,7 +211,6 @@ public class OrderController {
         }
     }
 
-    // Get order by ID
     @GetMapping("/{orderId}")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
     public ResponseEntity<?> getOrderById(@PathVariable Long orderId, HttpServletRequest request) {
@@ -185,7 +238,6 @@ public class OrderController {
         }
     }
 
-    // Get new orders (admin only)
     @GetMapping("/new")
     @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<?> getNewOrders() {
@@ -277,6 +329,7 @@ public class OrderController {
         }
     }
 
+
     // Update event details (customer only)
     @PatchMapping("/{orderId}/event-details")
     @PreAuthorize("hasRole('CUSTOMER')")
@@ -306,6 +359,7 @@ public class OrderController {
                     .body(Map.of("message", "Failed to update event details: " + e.getMessage()));
         }
     }
+
 
     @PostMapping("/{orderId}/update")
     @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
@@ -340,6 +394,7 @@ public class OrderController {
                     .body(Map.of("message", "Failed to update order: " + e.getMessage()));
         }
     }
+
 
     private String extractTokenFromRequest(HttpServletRequest request) {
         String bearerToken = request.getHeader("Authorization");

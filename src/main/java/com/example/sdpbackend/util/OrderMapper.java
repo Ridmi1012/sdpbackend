@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 public class OrderMapper {
     /**
      * Convert Order entity to OrderResponse DTO
-     * MODIFIED - Added mapping for request-similar fields
+     * MODIFIED - Added mapping for full-custom fields
      */
     public OrderResponse toResponse(Order order) {
         OrderResponse response = new OrderResponse();
@@ -37,11 +37,17 @@ public class OrderMapper {
         response.setCreatedAt(order.getCreatedAt());
         response.setUpdatedAt(order.getUpdatedAt());
 
-        // NEW - Map request-similar specific fields
+        // Map request-similar and full-custom specific fields
         response.setThemeColor(order.getThemeColor());
         response.setConceptCustomization(order.getConceptCustomization());
 
-        // NEW - Map order items for request-similar orders
+        // NEW - Map full-custom specific fields
+        if ("full-custom".equals(order.getOrderType())) {
+            response.setInspirationPhotos(order.getInspirationPhotos());
+            response.setSpecialNote(order.getSpecialNote());
+        }
+
+        // Map order items for request-similar and full-custom orders
         if (order.getOrderItems() != null && !order.getOrderItems().isEmpty()) {
             List<OrderResponse.OrderItemResponse> itemResponses = order.getOrderItems().stream()
                     .map(this::toOrderItemResponse)
@@ -84,9 +90,6 @@ public class OrderMapper {
         return response;
     }
 
-    /**
-     * NEW - Convert OrderItem entity to OrderItemResponse
-     */
     private OrderResponse.OrderItemResponse toOrderItemResponse(OrderItem orderItem) {
         OrderResponse.OrderItemResponse response = new OrderResponse.OrderItemResponse();
         response.setId(orderItem.getId());
@@ -102,7 +105,7 @@ public class OrderMapper {
 
     /**
      * Convert OrderRequest DTO to Order entity (for creation)
-     * MODIFIED - Added handling for request-similar fields
+     * MODIFIED - Added handling for full-custom fields
      */
     public Order toEntity(OrderRequest request, Customer customer) {
         Order order = new Order();
@@ -113,16 +116,29 @@ public class OrderMapper {
         order.setCustomer(customer);
         order.setStatus(request.getStatus() != null ? request.getStatus() : "pending");
 
-        // NEW - Set request-similar specific fields
-        if ("request-similar".equals(request.getOrderType())) {
+        // Set customization fields for both request-similar and full-custom
+        if ("request-similar".equals(request.getOrderType()) || "full-custom".equals(request.getOrderType())) {
             order.setThemeColor(request.getThemeColor());
             order.setConceptCustomization(request.getConceptCustomization());
+        }
+
+        // NEW - Set full-custom specific fields
+        if ("full-custom".equals(request.getOrderType())) {
+            order.setSpecialNote(request.getSpecialNote());
+
+            // Handle inspiration photos (max 3)
+            if (request.getInspirationPhotos() != null) {
+                List<String> photos = request.getInspirationPhotos().stream()
+                        .limit(3)
+                        .collect(Collectors.toList());
+                order.setInspirationPhotos(photos);
+            }
         }
 
         // Create and set event details
         if (request.getCustomDetails() != null) {
             EventDetails eventDetails = new EventDetails();
-            eventDetails.setOrder(order); // Establish bidirectional relationship
+            eventDetails.setOrder(order);
 
             eventDetails.setCustomName(request.getCustomDetails().getCustomName());
             eventDetails.setCustomAge(request.getCustomDetails().getCustomAge());
@@ -146,7 +162,7 @@ public class OrderMapper {
 
     /**
      * Update an existing Order entity with data from an OrderRequest
-     * MODIFIED - Added handling for request-similar fields
+     * MODIFIED - Added handling for full-custom fields
      */
     public Order updateEntityFromRequest(Order order, OrderRequest request) {
         // Only update fields that are present in the request
@@ -158,13 +174,26 @@ public class OrderMapper {
             order.setStatus(request.getStatus());
         }
 
-        // NEW - Update request-similar specific fields
-        if ("request-similar".equals(order.getOrderType())) {
+        // Update customization fields for request-similar and full-custom
+        if ("request-similar".equals(order.getOrderType()) || "full-custom".equals(order.getOrderType())) {
             if (request.getThemeColor() != null) {
                 order.setThemeColor(request.getThemeColor());
             }
             if (request.getConceptCustomization() != null) {
                 order.setConceptCustomization(request.getConceptCustomization());
+            }
+        }
+
+        // NEW - Update full-custom specific fields
+        if ("full-custom".equals(order.getOrderType())) {
+            if (request.getSpecialNote() != null) {
+                order.setSpecialNote(request.getSpecialNote());
+            }
+            if (request.getInspirationPhotos() != null) {
+                List<String> photos = request.getInspirationPhotos().stream()
+                        .limit(3)
+                        .collect(Collectors.toList());
+                order.setInspirationPhotos(photos);
             }
         }
 
