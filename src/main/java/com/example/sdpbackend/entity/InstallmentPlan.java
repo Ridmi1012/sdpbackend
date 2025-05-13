@@ -6,7 +6,9 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "installment_plans")
@@ -28,12 +30,11 @@ public class InstallmentPlan {
     @CollectionTable(name = "installment_percentages",
             joinColumns = @JoinColumn(name = "plan_id"))
     @Column(name = "percentage")
-    private List<Double> percentages;
+    private List<Double> percentages = new ArrayList<>();
 
     @Column(columnDefinition = "TEXT")
     private String description;
 
-    // Indicates if this plan is active/available
     @Column(nullable = false)
     private Boolean isActive = true;
 }
