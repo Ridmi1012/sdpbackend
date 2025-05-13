@@ -21,11 +21,15 @@ public class OrderRequest {
     @JsonProperty("customerInfo")
     private CustomerInfo customerInfo;
 
-    // NEW FIELDS for request-similar
+    // Fields for request-similar and full-custom
     private String themeColor;
     private String conceptCustomization;
 
-    // NEW - List of items for request-similar orders
+    // NEW FIELDS for full-custom
+    private List<String> inspirationPhotos; // Max 3 URLs
+    private String specialNote;
+
+    // List of items for request-similar and full-custom orders
     @JsonProperty("orderItems")
     private List<OrderItemRequest> orderItems;
 
@@ -54,7 +58,6 @@ public class OrderRequest {
         private String relationshipToPerson;
     }
 
-    // NEW INNER CLASS for order items
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

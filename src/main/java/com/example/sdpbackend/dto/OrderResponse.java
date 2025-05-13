@@ -22,11 +22,15 @@ public class OrderResponse {
     private String status;
     private String customerId;
 
-    // NEW FIELDS for request-similar
+    // Fields for request-similar and full-custom
     private String themeColor;
     private String conceptCustomization;
 
-    // NEW - List of order items
+    // NEW FIELDS for full-custom
+    private List<String> inspirationPhotos;
+    private String specialNote;
+
+    // List of order items
     private List<OrderItemResponse> orderItems;
 
     private Double basePrice;
@@ -74,7 +78,6 @@ public class OrderResponse {
         private String relationshipToPerson;
     }
 
-    // NEW INNER CLASS for order items response
     @Data
     @NoArgsConstructor
     @AllArgsConstructor

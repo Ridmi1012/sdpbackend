@@ -24,7 +24,7 @@ public class Order {
     private String orderNumber;
 
     @Column(nullable = false)
-    private String orderType; // 'as-is', 'request-similar' // CHANGED - added request-similar
+    private String orderType; // 'as-is', 'request-similar', 'full-custom' // CHANGED - added full-custom
 
     @Column(nullable = false)
     private String status;
@@ -39,11 +39,20 @@ public class Order {
     @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
     private EventDetails eventDetails;
 
-    // NEW FIELDS for request-similar scenario
+    // Fields for request-similar and full-custom
     private String themeColor;
     private String conceptCustomization;
 
-    // NEW RELATIONSHIP - Order items for request-similar orders
+    // NEW FIELDS for full-custom scenario
+    @ElementCollection
+    @CollectionTable(name = "order_inspiration_photos", joinColumns = @JoinColumn(name = "order_id"))
+    @Column(name = "photo_url")
+    private List<String> inspirationPhotos = new ArrayList<>(); // Max 3 photos
+
+    @Column(length = 1000)
+    private String specialNote; // Special instructions for full-custom orders
+
+    // Order items for request-similar and full-custom orders
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<OrderItem> orderItems = new ArrayList<>();
 
