@@ -15,5 +15,4 @@ public interface EventRepository extends JpaRepository<Event, Long> {
     long countByEventDate(LocalDate date);
     List<Event> findByEventDateBetween(LocalDate startDate, LocalDate endDate);
     List<Event> findByEventDateGreaterThanEqualOrderByEventDate(LocalDate date);
-    List<Event> findByIsFullyPaid(Boolean isFullyPaid);
 }

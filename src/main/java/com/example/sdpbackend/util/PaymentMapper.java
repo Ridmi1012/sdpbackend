@@ -2,6 +2,7 @@ package com.example.sdpbackend.util;
 
 
 import com.example.sdpbackend.dto.PaymentResponse;
+import com.example.sdpbackend.entity.Installment;
 import com.example.sdpbackend.entity.Payment;
 import org.springframework.stereotype.Component;
 
@@ -12,67 +13,101 @@ import java.time.format.DateTimeFormatter;
 public class PaymentMapper {
     private static final DateTimeFormatter dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss");
 
-    public PaymentResponse toDTO(Payment payment) {
-        if (payment == null) {
-            return null;
+    /**
+     * Convert Installment to PaymentResponse
+     * This maintains compatibility with frontend
+     */
+    public PaymentResponse installmentToPaymentResponse(Installment installment) {
+        PaymentResponse response = new PaymentResponse();
+
+        response.setId(installment.getId());
+        response.setAmount(installment.getAmount());
+        response.setStatus(installment.getStatus());
+        response.setMethod(installment.getPaymentMethod());
+        response.setSlipUrl(installment.getPaymentSlipUrl());
+        response.setNotes(installment.getNotes());
+        response.setInstallmentNumber(installment.getInstallmentNumber());
+
+        // Dates
+        if (installment.getPaymentDate() != null) {
+            response.setSubmittedDate(installment.getPaymentDate().format(dateFormatter));
         }
 
-        PaymentResponse dto = new PaymentResponse();
-        dto.setId(payment.getId());
-        dto.setAmount(payment.getAmount());
-        dto.setStatus(payment.getStatus());
-        dto.setSlipUrl(payment.getPaymentSlipUrl());
-        dto.setNotes(payment.getNotes());
-        dto.setMethod(payment.getMethod());
-        dto.setRemainingAmount(payment.getRemainingAmount());
-        dto.setInstallmentNumber(payment.getInstallmentNumber());
-        dto.setIsActive(payment.getIsActive());
-
-        // Convert dates to formatted strings to avoid parsing issues
-        if (payment.getPaymentDateTime() != null) {
-            dto.setSubmittedDate(formatDateTime(payment.getPaymentDateTime()));
+        if (installment.getConfirmationDate() != null) {
+            response.setVerifiedDate(installment.getConfirmationDate().format(dateFormatter));
         }
 
-        if (payment.getConfirmationDateTime() != null) {
-            dto.setVerifiedDate(formatDateTime(payment.getConfirmationDateTime()));
-        }
+        // Order details from parent payment
+        Payment payment = installment.getPayment();
+        if (payment != null && payment.getOrder() != null) {
+            response.setOrderId(payment.getOrder().getId());
+            response.setOrderNumber(payment.getOrder().getOrderNumber());
 
-        // Set payment type based on isPartialPayment flag
-        dto.setPaymentType(payment.getIsPartialPayment() != null && payment.getIsPartialPayment() ? "partial" : "full");
-
-        // Extract order details
-        if (payment.getOrder() != null) {
-            dto.setOrderId(payment.getOrder().getId());
-            dto.setOrderNumber(payment.getOrder().getOrderNumber());
-
-            // Extract customer name
             if (payment.getOrder().getCustomer() != null) {
-                dto.setCustomerName(
+                response.setCustomerName(
                         payment.getOrder().getCustomer().getFirstName() + " " +
                                 payment.getOrder().getCustomer().getLastName()
                 );
             }
 
-            // Extract event date if available
             if (payment.getOrder().getEventDetails() != null) {
-                dto.setEventDate(payment.getOrder().getEventDetails().getEventDate());
-            } else {
-                dto.setEventDate(""); // Set default value
+                response.setEventDate(payment.getOrder().getEventDetails().getEventDate());
             }
         }
 
-        // Set rejection reason if applicable
-        if (payment.getRejectionReason() != null) {
-            dto.setRejectionReason(payment.getRejectionReason());
-        }
+        // Payment type from parent
+        response.setPaymentType(payment.getPaymentType());
 
-        return dto;
+        // Determine if this is the current active installment based on status and number
+        boolean isActive = payment.getCurrentInstallmentNumber().equals(installment.getInstallmentNumber())
+                && "pending".equals(installment.getStatus());
+        response.setIsActive(isActive);
+
+        // Remaining amount after this installment
+        double totalPaidAfter = payment.getInstallments().stream()
+                .filter(i -> i.getInstallmentNumber() <= installment.getInstallmentNumber())
+                .filter(i -> "confirmed".equals(i.getStatus()))
+                .mapToDouble(Installment::getAmount)
+                .sum();
+        response.setRemainingAmount(payment.getTotalAmount() - totalPaidAfter);
+
+        return response;
     }
 
-    private String formatDateTime(LocalDateTime dateTime) {
-        if (dateTime == null) {
-            return "";
+    /**
+     * Convert Payment to summary format
+     */
+    public PaymentResponse paymentToSummaryResponse(Payment payment) {
+        PaymentResponse response = new PaymentResponse();
+
+        response.setId(payment.getId());
+        response.setOrderId(payment.getOrder().getId());
+        response.setOrderNumber(payment.getOrder().getOrderNumber());
+        response.setPaymentType(payment.getPaymentType());
+        response.setStatus(payment.getStatus());
+
+        // Total amounts
+        response.setAmount(payment.getTotalAmount());
+        response.setRemainingAmount(payment.getRemainingAmount());
+
+        // Customer info
+        if (payment.getOrder().getCustomer() != null) {
+            response.setCustomerName(
+                    payment.getOrder().getCustomer().getFirstName() + " " +
+                            payment.getOrder().getCustomer().getLastName()
+            );
         }
-        return dateTime.format(dateFormatter);
+
+        // Event info
+        if (payment.getOrder().getEventDetails() != null) {
+            response.setEventDate(payment.getOrder().getEventDetails().getEventDate());
+        }
+
+        // Dates
+        if (payment.getCreatedAt() != null) {
+            response.setSubmittedDate(payment.getCreatedAt().format(dateFormatter));
+        }
+
+        return response;
     }
 }

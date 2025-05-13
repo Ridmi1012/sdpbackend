@@ -1,6 +1,7 @@
 package com.example.sdpbackend.dto;
 
 
+import com.example.sdpbackend.entity.InstallmentPlan;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -18,8 +19,8 @@ public class PaymentSummaryDTO {
     private Boolean isFullyPaid;
     private String paymentStatus; // 'pending', 'partial', 'completed'
 
-    // Installment plan details
-    private Map<String, Object> installmentPlan;
+    // Installment plan details (changed from Map to proper type)
+    private InstallmentPlan installmentPlan;
     private Integer currentInstallment;
     private Double nextInstallmentAmount;
     private String nextInstallmentDueDate;
@@ -33,11 +34,22 @@ public class PaymentSummaryDTO {
     // Add missing field for active payment ID
     private Long activePaymentId;
 
+    // Add missing totalInstallments property
+    private Integer totalInstallments;
+
     public void setActivePaymentId(Long id) {
         this.activePaymentId = id;
     }
 
     public Long getActivePaymentId() {
         return this.activePaymentId;
+    }
+
+    public void setTotalInstallments(Integer totalInstallments) {
+        this.totalInstallments = totalInstallments;
+    }
+
+    public Integer getTotalInstallments() {
+        return this.totalInstallments;
     }
 }

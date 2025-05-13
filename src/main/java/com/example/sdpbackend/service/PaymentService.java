@@ -2,32 +2,23 @@ package com.example.sdpbackend.service;
 
 import com.example.sdpbackend.config.PayHereConfig;
 import com.example.sdpbackend.dto.*;
-
-import com.example.sdpbackend.entity.InstallmentPlan;
-import com.example.sdpbackend.entity.Order;
-import com.example.sdpbackend.entity.Payment;
+import com.example.sdpbackend.entity.*;
 import com.example.sdpbackend.repository.InstallmentPlanRepository;
+import com.example.sdpbackend.repository.InstallmentRepository;
 import com.example.sdpbackend.repository.OrderRepository;
 import com.example.sdpbackend.repository.PaymentRepository;
-import com.example.sdpbackend.util.OrderMapper;
-import com.example.sdpbackend.util.PayHereVerifier;
 import com.example.sdpbackend.util.PaymentMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.time.temporal.ChronoUnit;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -36,6 +27,9 @@ public class PaymentService {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private InstallmentRepository installmentRepository;
 
     @Autowired
     private OrderRepository orderRepository;
@@ -47,292 +41,447 @@ public class PaymentService {
     private PaymentMapper paymentMapper;
 
     @Autowired
-    private EventService eventService;
-
-    @Autowired
     private NotificationService notificationService;
 
     @Autowired
     private PayHereConfig payHereConfig;
 
-    @Autowired
-    private PayHereVerifier payHereVerifier;
-
-
     /**
-     * Process a payment for an order
-     * Handles both PayHere and bank transfer methods
-     */
-//    @Transactional
-//    public OrderResponse processPayment(PaymentRequest paymentRequest) {
-//        logger.info("Processing payment for order ID: {}", paymentRequest.getOrderId());
-//
-//        // Find the order
-//        Long orderId = Long.valueOf(paymentRequest.getOrderId());
-//        Order order = orderRepository.findById(orderId)
-//                .orElseThrow(() -> {
-//                    logger.error("Order not found with id: {}", orderId);
-//                    return new RuntimeException("Order not found with id: " + orderId);
-//                });
-//
-//        // Verify that partial payments are only allowed for events > 24 hours away
-//        if (paymentRequest.getAmount() < order.getTotalPrice() && isEventWithin24Hours(order)) {
-//            logger.warn("Attempted partial payment for order with event within 24 hours: {}", orderId);
-//            throw new RuntimeException("Full payment is required for events within 24 hours");
-//        }
-//
-//        // Create and save payment record
-//        Payment payment = new Payment();
-//        payment.setAmount(paymentRequest.getAmount());
-//        payment.setMethod(paymentRequest.getPaymentMethod());
-//        payment.setTransactionId(paymentRequest.getTransactionId());
-//        payment.setStatus("completed");
-//        payment.setOrder(order);
-//        payment.setConfirmationDateTime(LocalDateTime.now());
-//
-//        // Handle installment tracking
-//        setInstallmentInfo(payment, order, paymentRequest);
-//
-//        // Calculate payment amounts and determine if partial
-//        calculatePaymentAmounts(payment, order);
-//
-//        // Add payment to order's payment list
-//        order.getPayments().add(payment);
-//        payment = paymentRepository.save(payment);
-//        logger.info("Created payment record with ID: {}", payment.getId());
-//
-//        // Update order payment status
-//        updateOrderPaymentStatus(order);
-//
-//        // Update event calendar
-//        updateEventAfterPayment(order);
-//
-//        // Save order with updated status
-//        Order savedOrder = orderRepository.save(order);
-//
-//        // Create notification about the payment
-//        try {
-//            notificationService.createPaymentNotification(savedOrder, payment);
-//            logger.info("Payment notification created for order: {}", order.getId());
-//        } catch (Exception e) {
-//            logger.error("Error creating payment notification: {}", e.getMessage(), e);
-//            // Continue processing as this is non-critical
-//        }
-//
-//        return new OrderResponse(); // Convert order to OrderResponse using mapper
-//    }
-
-    /**
-     * Upload payment slip for bank transfer
-     */
-    /**
-     * Upload payment slip for bank transfer
-     * CHANGE: Implement is_active flag properly
+     * Process a payment for an order (for bank transfer)
      */
     @Transactional
-    public OrderResponse uploadPaymentSlip(
-            Long orderId,
-            String imageUrl,
-            Double amount,
-            Boolean isPartialPayment,
-            String notes
-    ) {
-        logger.info("Processing payment slip upload for order ID: {}", orderId);
+    public OrderResponse processPayment(PaymentRequest paymentRequest) {
+        logger.info("Processing payment for order ID: {}", paymentRequest.getOrderId());
 
         // Find the order
+        Long orderId = Long.valueOf(paymentRequest.getOrderId());
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
+                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
 
-        // Verify that partial payments are only allowed for events > 24 hours away
-        if (isPartialPayment && isEventWithin24Hours(order)) {
-            logger.warn("Attempted partial payment slip upload for order with event within 24 hours: {}", orderId);
-            throw new RuntimeException("Full payment is required for events within 24 hours");
+        // For PayHere, don't create payment record yet
+        if ("payhere".equals(paymentRequest.getPaymentMethod())) {
+            return initiatePayHerePayment(order, paymentRequest);
         }
 
-        // Create new pending payment record
-        Payment payment = new Payment();
+        // For bank transfer, create payment record
+        Payment payment = createOrUpdatePayment(order, paymentRequest);
 
-        // Set payment amount
-        if (amount != null) {
-            payment.setAmount(amount);
-        } else {
-            payment.setAmount(order.getTotalPrice() != null ? order.getTotalPrice() : 0.0);
-        }
-
-        payment.setMethod("bank-transfer");
-        payment.setPaymentSlipUrl(imageUrl);
-        payment.setStatus("pending"); // Needs admin verification
-        payment.setOrder(order);
-        payment.setIsPartialPayment(isPartialPayment != null ? isPartialPayment : false);
-
-        // Set installment tracking info if applicable
-        if (order.getInstallmentPlanId() != null) {
-            payment.setInstallmentPlanId(order.getInstallmentPlanId().intValue());
-            payment.setInstallmentNumber(order.getCurrentInstallmentNumber());
-        }
-
-        if (notes != null && !notes.isEmpty()) {
-            payment.setNotes(notes);
-        }
-
-        // Calculate remaining amount
-        calculatePaymentAmounts(payment, order);
-
-        // Mark as active since this is the most recent payment attempt
-        // (will still need admin verification)
-        deactivateAllPaymentsForOrder(order);
-        payment.setIsActive(true);
-
-        // Add payment to order
-        order.getPayments().add(payment);
-        payment = paymentRepository.save(payment);
-        logger.info("Created pending payment record with ID: {}", payment.getId());
-
-        // Update order payment status to pending
-        order.setPaymentStatus("pending");
-
-        // Set next installment due date if needed
-        setNextInstallmentDueDate(order);
-
-        // Save order with updated status
-        Order savedOrder = orderRepository.save(order);
-
-        // Create notification for admin
-        try {
-            notificationService.createPaymentSlipNotification(savedOrder, payment);
-            logger.info("Payment slip notification created for admin");
-        } catch (Exception e) {
-            logger.error("Error creating payment slip notification: {}", e.getMessage(), e);
-        }
-
-        return new OrderResponse(); // Convert order to OrderResponse using mapper
+        // Return order response
+        return new OrderResponse();
     }
 
-//    /**
-//     * Verify a manual payment (admin)
-//     */
-//    @Transactional
-//    public OrderResponse verifyManualPayment(Long orderId, Long paymentId, boolean isApproved, String reason) {
-//        logger.info("Verifying manual payment - Order: {}, Payment: {}, Approved: {}",
-//                orderId, paymentId, isApproved);
-//
-//        // Find the order
-//        Order order = orderRepository.findById(orderId)
-//                .orElseThrow(() -> {
-//                    logger.error("Order not found with id: {}", orderId);
-//                    return new RuntimeException("Order not found with id: " + orderId);
-//                });
-//
-//        // Find the payment
-//        Payment payment = paymentRepository.findById(paymentId)
-//                .orElseThrow(() -> {
-//                    logger.error("Payment not found with id: {}", paymentId);
-//                    return new RuntimeException("Payment not found with id: " + paymentId);
-//                });
-//
-//        if (isApproved) {
-//            // Approve payment
-//            payment.setStatus("completed");
-//            payment.setConfirmationDateTime(LocalDateTime.now());
-//            logger.info("Payment approved: {}", payment.getId());
-//
-//            // Update order payment status
-//            updateOrderPaymentStatus(order);
-//
-//            // Update event in calendar
-//            updateEventAfterPayment(order);
-//        } else {
-//            // Reject payment
-//            payment.setStatus("rejected");
-//            if (reason != null && !reason.isEmpty()) {
-//                payment.setRejectionReason(reason);
-//            }
-//            logger.info("Payment rejected: {}, reason: {}", payment.getId(), reason);
-//        }
-//
-//        // Save payment and order
-//        paymentRepository.save(payment);
-//        Order savedOrder = orderRepository.save(order);
-//
-//        // Notify customer about payment verification
-//        try {
-//            notificationService.createPaymentVerificationNotification(savedOrder, payment, isApproved);
-//            logger.info("Payment verification notification sent to customer");
-//        } catch (Exception e) {
-//            logger.error("Error creating verification notification: {}", e.getMessage(), e);
-//            // Continue processing as this is non-critical
-//        }
-//
-//        return new OrderResponse(); // Convert order to OrderResponse using mapper
-//    }
+    /**
+     * Create or update payment record (for bank transfer)
+     */
+    private Payment createOrUpdatePayment(Order order, PaymentRequest paymentRequest) {
+        // Check if order already has an active payment
+        Payment existingPayment = order.getPayments().stream()
+                .filter(p -> !"rejected".equals(p.getStatus()) && !"completed".equals(p.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        Payment payment;
+
+        if (existingPayment != null) {
+            payment = existingPayment;
+            logger.info("Using existing payment ID: {} for order: {}", payment.getId(), order.getId());
+        } else {
+            payment = new Payment();
+            payment.setOrder(order);
+            payment.setPaymentMethod(paymentRequest.getPaymentMethod());
+            payment.setTotalAmount(order.getTotalPrice());
+
+            // Set payment type and plan
+            if (paymentRequest.getInstallmentPlanId() != null && paymentRequest.getInstallmentPlanId() > 1) {
+                payment.setPaymentType("installment");
+                payment.setInstallmentPlanId(Long.valueOf(paymentRequest.getInstallmentPlanId()));
+
+                InstallmentPlan plan = installmentPlanRepository.findById(payment.getInstallmentPlanId())
+                        .orElseThrow(() -> new RuntimeException("Installment plan not found"));
+
+                payment.setTotalInstallments(plan.getNumberOfInstallments());
+                payment.setCurrentInstallment(1);
+                createInstallmentRecords(payment, plan);
+            } else {
+                payment.setPaymentType("full");
+                payment.setTotalInstallments(1);
+                payment.setCurrentInstallment(1);
+                payment.setInstallmentPlanId(1L); // Set to full payment plan ID
+
+                Installment installment = new Installment();
+                installment.setPayment(payment);
+                installment.setInstallmentNumber(1);
+                installment.setAmount(payment.getTotalAmount());
+                installment.setPercentage(100.0);
+                installment.setStatus("pending");
+                installment.setPaymentMethod(paymentRequest.getPaymentMethod());
+                installment.setNotes(paymentRequest.getNotes());
+
+                // Set transaction ID if provided (for bank transfers)
+                if (paymentRequest.getTransactionId() != null) {
+                    installment.setTransactionId(paymentRequest.getTransactionId());
+                }
+
+                payment.getInstallments().add(installment);
+            }
+
+            payment.setStatus("pending");
+            payment.setNotes(paymentRequest.getNotes());
+            payment = paymentRepository.save(payment);
+            logger.info("Created payment record with ID: {}", payment.getId());
+        }
+
+        return payment;
+    }
 
     /**
-     * Get payment summary for an order
-     * CHANGE: Include is_active in the response
+     * Initiate PayHere payment without creating database records
+     */
+    private OrderResponse initiatePayHerePayment(Order order, PaymentRequest request) {
+        logger.info("Initiating PayHere payment for order ID: {}", order.getId());
+
+        // Calculate amount based on installment plan
+        Double amount = request.getAmount();
+        if (request.getInstallmentPlanId() != null && request.getInstallmentPlanId() > 1) {
+            InstallmentPlan plan = installmentPlanRepository.findById(request.getInstallmentPlanId().longValue())
+                    .orElseThrow(() -> new RuntimeException("Installment plan not found"));
+
+            int installmentNumber = request.getInstallmentNumber() != null ? request.getInstallmentNumber() : 1;
+            amount = (plan.getPercentages().get(installmentNumber - 1) / 100.0) * order.getTotalPrice();
+        }
+
+        // Build PayHere parameters without creating payment record
+        Map<String, String> params = buildPayHereParametersForInitiation(order, request, amount);
+
+        // Return order response with PayHere parameters
+        OrderResponse response = new OrderResponse();
+        response.setPayHereParams(params);
+        return response;
+    }
+
+    /**
+     * Handle PayHere payment verification - create records only on success
+     */
+    @Transactional
+    public OrderResponse verifyPayHerePayment(String orderId, String paymentId) {
+        logger.info("Verifying PayHere payment - Order: {}, PayHere Payment ID: {}", orderId, paymentId);
+
+        Order order = orderRepository.findById(Long.valueOf(orderId))
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Payment payment = order.getPayments().stream()
+                .filter(p -> !"rejected".equals(p.getStatus()) && !"completed".equals(p.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        if (payment == null) {
+            payment = createPaymentFromPayHereSuccess(order, paymentId);
+        }
+
+        Installment currentInstallment = payment.getCurrentInstallment();
+        currentInstallment.setTransactionId(paymentId);
+        currentInstallment.setStatus("confirmed");
+        currentInstallment.setConfirmationDate(LocalDateTime.now());
+        currentInstallment.setPaymentMethod("payhere");
+
+        installmentRepository.save(currentInstallment);
+
+        boolean shouldIncrementInstallment = payment.getCurrentInstallmentNumber() < payment.getTotalInstallments();
+        payment.updateStatus();
+
+        if (shouldIncrementInstallment && !"completed".equals(payment.getStatus())) {
+            payment.setCurrentInstallment(payment.getCurrentInstallmentNumber() + 1);
+        }
+
+        paymentRepository.save(payment);
+        updateOrderPaymentStatus(order, payment);
+        notificationService.createPaymentNotification(order, payment);
+
+        return new OrderResponse();
+    }
+
+    /**
+     * Create payment record from successful PayHere payment
+     */
+    private Payment createPaymentFromPayHereSuccess(Order order, String paymentId) {
+        Payment payment = new Payment();
+        payment.setOrder(order);
+        payment.setPaymentMethod("payhere");
+        payment.setTotalAmount(order.getTotalPrice());
+        payment.setPaymentType("full");
+        payment.setTotalInstallments(1);
+        payment.setCurrentInstallment(1);
+        payment.setStatus("pending");
+        payment.setInstallmentPlanId(1L); // Full payment plan
+
+        Installment installment = new Installment();
+        installment.setPayment(payment);
+        installment.setInstallmentNumber(1);
+        installment.setAmount(payment.getTotalAmount());
+        installment.setPercentage(100.0);
+        installment.setStatus("pending");
+        installment.setPaymentMethod("payhere");
+
+        payment.getInstallments().add(installment);
+
+        return paymentRepository.save(payment);
+    }
+
+    /**
+     * Upload payment slip for manual payment
+     */
+    @Transactional
+    public OrderResponse uploadPaymentSlip(Long orderId, String imageUrl, Double amount,
+                                           Boolean isPartialPayment, String notes) {
+        logger.info("Processing payment slip upload for order ID: {}", orderId);
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Payment payment = order.getPayments().stream()
+                .filter(p -> !"rejected".equals(p.getStatus()) && !"completed".equals(p.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        if (payment == null) {
+            PaymentRequest request = new PaymentRequest();
+            request.setOrderId(orderId.toString());
+            request.setPaymentMethod("bank-transfer");
+            request.setAmount(amount);
+            request.setNotes(notes);
+            payment = createOrUpdatePayment(order, request);
+        }
+
+        Installment currentInstallment = payment.getCurrentInstallment();
+        if (currentInstallment == null) {
+            throw new RuntimeException("No current installment found");
+        }
+
+        if (currentInstallment.getStatus().equals("confirmed")) {
+            throw new RuntimeException("Current installment is already paid");
+        }
+
+        currentInstallment.setPaymentSlipUrl(imageUrl);
+        currentInstallment.setNotes(notes);
+        currentInstallment.setPaymentMethod("bank-transfer");
+        currentInstallment.setStatus("pending");
+        currentInstallment.setAmount(amount);
+
+        // Generate a transaction ID for bank transfers
+        String transactionId = "BT-" + System.currentTimeMillis();
+        currentInstallment.setTransactionId(transactionId);
+
+        installmentRepository.save(currentInstallment);
+
+        notificationService.createPaymentSlipNotification(order, payment);
+
+        return new OrderResponse();
+    }
+
+    /**
+     * Verify manual payment
+     */
+    @Transactional
+    public OrderResponse verifyManualPayment(Long orderId, Long paymentId, boolean isApproved, String reason) {
+        logger.info("Verifying manual payment - Order: {}, Payment: {}, Approved: {}",
+                orderId, paymentId, isApproved);
+
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Payment not found"));
+
+        Installment currentInstallment = payment.getCurrentInstallment();
+        if (currentInstallment == null || !"pending".equals(currentInstallment.getStatus())) {
+            throw new RuntimeException("No pending installment found for verification");
+        }
+
+        // Get the current user's username from security context
+        String adminUsername = getCurrentUsername();
+
+        if (isApproved) {
+            currentInstallment.setStatus("confirmed");
+            currentInstallment.setConfirmationDate(LocalDateTime.now());
+            currentInstallment.setVerifiedBy(adminUsername);
+
+            installmentRepository.save(currentInstallment);
+
+            boolean shouldIncrementInstallment = payment.getCurrentInstallmentNumber() < payment.getTotalInstallments();
+            payment.updateStatus();
+
+            if (shouldIncrementInstallment && !"completed".equals(payment.getStatus())) {
+                payment.setCurrentInstallment(payment.getCurrentInstallmentNumber() + 1);
+            }
+        } else {
+            currentInstallment.setStatus("rejected");
+            currentInstallment.setRejectionReason(reason);
+            currentInstallment.setVerifiedBy(adminUsername);
+            installmentRepository.save(currentInstallment);
+
+            payment.updateStatus();
+        }
+
+        paymentRepository.save(payment);
+        updateOrderPaymentStatus(order, payment);
+        notificationService.createPaymentVerificationNotification(order, payment, isApproved);
+
+        return new OrderResponse();
+    }
+
+    /**
+     * Get current username from security context
+     */
+    private String getCurrentUsername() {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication != null && authentication.getPrincipal() != null) {
+            return authentication.getName();
+        }
+        return "system";
+    }
+
+    /**
+     * Build PayHere parameters for payment initiation
+     */
+    private Map<String, String> buildPayHereParametersForInitiation(Order order, PaymentRequest request, Double amount) {
+        Map<String, String> params = new HashMap<>();
+
+        params.put("merchant_id", payHereConfig.getMerchantId());
+        params.put("return_url", payHereConfig.getReturnUrl());
+        params.put("cancel_url", payHereConfig.getCancelUrl());
+        params.put("notify_url", payHereConfig.getNotifyUrl());
+
+        params.put("order_id", order.getId().toString());
+        params.put("items", "Order #" + order.getOrderNumber());
+        params.put("currency", "LKR");
+        params.put("amount", String.valueOf(amount));
+
+        // Customer details
+        Customer customer = order.getCustomer();
+        params.put("first_name", customer.getFirstName());
+        params.put("last_name", customer.getLastName());
+        params.put("email", customer.getEmail());
+        params.put("phone", customer.getContact());
+        params.put("address", "");
+        params.put("city", "");
+        params.put("country", "Sri Lanka");
+
+        // Custom fields for later reference
+        params.put("custom_1", String.valueOf(request.getInstallmentPlanId() != null ? request.getInstallmentPlanId() : 1));
+        params.put("custom_2", String.valueOf(request.getInstallmentNumber() != null ? request.getInstallmentNumber() : 1));
+
+        return params;
+    }
+
+    /**
+     * Create installment records based on plan
+     */
+    private void createInstallmentRecords(Payment payment, InstallmentPlan plan) {
+        for (int i = 0; i < plan.getNumberOfInstallments(); i++) {
+            Installment installment = new Installment();
+            installment.setPayment(payment);
+            installment.setInstallmentNumber(i + 1);
+            installment.setPercentage(plan.getPercentages().get(i));
+            installment.setAmount((plan.getPercentages().get(i) / 100.0) * payment.getTotalAmount());
+            installment.setStatus("pending");
+            installment.setPaymentMethod(payment.getPaymentMethod());
+
+            payment.getInstallments().add(installment);
+        }
+    }
+
+    /**
+     * Get payment summary
      */
     public PaymentSummaryDTO getPaymentSummary(Long orderId) {
-        logger.info("Calculating payment summary for order ID: {}", orderId);
+        logger.info("Getting payment summary for order ID: {}", orderId);
 
-        // Find the order
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // Create payment summary DTO
         PaymentSummaryDTO summary = new PaymentSummaryDTO();
+        summary.setTotalAmount(order.getTotalPrice());
 
-        // Set total amount
-        summary.setTotalAmount(order.getTotalPrice() != null ? order.getTotalPrice() : 0.0);
-
-        // Calculate total paid from completed payments
-        Double totalPaid = order.getPayments().stream()
-                .filter(p -> "completed".equals(p.getStatus()))
-                .mapToDouble(Payment::getAmount)
-                .sum();
-        summary.setTotalPaid(totalPaid);
-
-        // Calculate remaining amount
-        Double remainingAmount = Math.max(0, summary.getTotalAmount() - totalPaid);
-        summary.setRemainingAmount(remainingAmount);
-
-        // Check if fully paid
-        summary.setIsFullyPaid(remainingAmount == 0 && totalPaid > 0);
-
-        // Set payment status
-        summary.setPaymentStatus(order.getPaymentStatus());
-
-        // Get all payments and map to DTOs
-        List<PaymentResponse> payments = order.getPayments().stream()
-                .map(paymentMapper::toDTO)
-                .collect(Collectors.toList());
-        summary.setPayments(payments);
-
-        // Calculate payment deadline
-        setPaymentDeadline(summary, order);
-
-        // Add installment plan details if applicable
-        addInstallmentPlanDetails(summary, order);
-
-        // Find the active payment (most recent successful or pending)
+        // Get active payment
         Payment activePayment = order.getPayments().stream()
-                .filter(p -> Boolean.TRUE.equals(p.getIsActive()))
-                .findFirst().orElse(null);
+                .filter(p -> !"rejected".equals(p.getStatus()))
+                .findFirst()
+                .orElse(null);
 
         if (activePayment != null) {
-            logger.debug("Found active payment with ID: {} for order ID: {}", activePayment.getId(), orderId);
+            summary.setTotalPaid(activePayment.getTotalPaid());
+            summary.setRemainingAmount(activePayment.getRemainingAmount());
+            summary.setIsFullyPaid(activePayment.isFullyPaid());
+            summary.setPaymentStatus(activePayment.getStatus());
+            summary.setTotalInstallments(activePayment.getTotalInstallments());
+
+            // Convert installments to payment responses
+            List<PaymentResponse> paymentResponses = activePayment.getInstallments().stream()
+                    .map(installment -> paymentMapper.installmentToPaymentResponse(installment))
+                    .collect(Collectors.toList());
+            summary.setPayments(paymentResponses);
+
+            // Set installment plan details
+            if ("installment".equals(activePayment.getPaymentType())) {
+                summary.setCurrentInstallment(activePayment.getCurrentInstallmentNumber());
+
+                // Set installment plan details
+                if (activePayment.getInstallmentPlanId() != null) {
+                    InstallmentPlan plan = installmentPlanRepository.findById(activePayment.getInstallmentPlanId())
+                            .orElse(null);
+                    if (plan != null) {
+                        InstallmentPlan summaryPlan = new InstallmentPlan();
+                        summaryPlan.setId(plan.getId());
+                        summaryPlan.setName(plan.getName());
+                        summaryPlan.setNumberOfInstallments(plan.getNumberOfInstallments());
+                        summaryPlan.setPercentages(plan.getPercentages());
+                        summaryPlan.setDescription(plan.getDescription());
+                        summary.setInstallmentPlan(summaryPlan);
+                    }
+                }
+
+                Installment nextInstallment = activePayment.getInstallments().stream()
+                        .filter(i -> i.getInstallmentNumber().equals(activePayment.getCurrentInstallmentNumber()))
+                        .findFirst()
+                        .orElse(null);
+
+                if (nextInstallment != null && !"confirmed".equals(nextInstallment.getStatus())) {
+                    summary.setNextInstallmentAmount(nextInstallment.getAmount());
+                }
+            }
+
+            // Set payment ID
             summary.setActivePaymentId(activePayment.getId());
         } else {
-            logger.debug("No active payment found for order ID: {}", orderId);
-            // Set to null explicitly to ensure consistent behavior
-            summary.setActivePaymentId(null);
+            summary.setTotalPaid(0.0);
+            summary.setRemainingAmount(order.getTotalPrice());
+            summary.setIsFullyPaid(false);
+            summary.setPaymentStatus("pending");
+            summary.setPayments(new ArrayList<>());
+        }
+
+        // Calculate deadline date (12 hours before event)
+        if (order.getEventDetails() != null && order.getEventDetails().getEventDate() != null) {
+            LocalDateTime eventDate = LocalDateTime.parse(order.getEventDetails().getEventDate());
+            LocalDateTime deadline = eventDate.minusHours(12);
+            summary.setDeadlineDate(deadline.toString());
         }
 
         return summary;
+    }
+
+    /**
+     * Update order payment status based on payment
+     */
+    private void updateOrderPaymentStatus(Order order, Payment payment) {
+        if (payment.isFullyPaid()) {
+            order.setPaymentStatus("completed");
+        } else if (payment.getTotalPaid() > 0) {
+            order.setPaymentStatus("partial");
+        } else {
+            order.setPaymentStatus("pending");
+        }
+        orderRepository.save(order);
     }
 
     /**
@@ -341,78 +490,58 @@ public class PaymentService {
     public List<InstallmentPlanDTO> getAvailableInstallmentPlansForOrder(Long orderId) {
         logger.info("Getting available installment plans for order ID: {}", orderId);
 
-        // Find the order
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        // Check if event date allows installment plans
+        // Check event date to filter plans
+        LocalDateTime eventDate = LocalDateTime.now().plusDays(30);
         if (order.getEventDetails() != null && order.getEventDetails().getEventDate() != null) {
+            String eventDateStr = order.getEventDetails().getEventDate();
             try {
-                // Parse event date
-                LocalDate eventDate = LocalDate.parse(order.getEventDetails().getEventDate());
-                LocalDate today = LocalDate.now();
-
-                // Calculate days until event
-                long daysUntilEvent = ChronoUnit.DAYS.between(today, eventDate);
-
-                // Get appropriate plans based on time until event
-                List<InstallmentPlan> plans;
-
-                if (daysUntilEvent <= 10) {
-                    // Only full payment for events within 10 days
-                    plans = installmentPlanRepository.findAll().stream()
-                            .filter(p -> p.getNumberOfInstallments() == 1)
-                            .collect(Collectors.toList());
-                    logger.info("Event is within 10 days - returning only full payment option");
+                // Try to parse as LocalDateTime first (if it contains time)
+                if (eventDateStr.contains("T")) {
+                    eventDate = LocalDateTime.parse(eventDateStr);
                 } else {
-                    // All active plans for events more than 10 days away
-                    plans = installmentPlanRepository.findAll().stream()
-                            .filter(InstallmentPlan::getIsActive)
-                            .collect(Collectors.toList());
-                    logger.info("Event is more than 10 days away - returning all installment plans");
+                    // Parse as LocalDate and convert to LocalDateTime
+                    LocalDate localDate = LocalDate.parse(eventDateStr);
+                    eventDate = localDate.atStartOfDay();
                 }
-
-                // Convert to DTOs and return
-                return plans.stream()
-                        .map(this::convertToPlanDTO)
-                        .collect(Collectors.toList());
-
             } catch (Exception e) {
-                logger.error("Error parsing event date or retrieving plans: {}", e.getMessage());
-                // On error, return only full payment option
+                logger.error("Error parsing event date: {}", eventDateStr, e);
+                // Fall back to default
+                eventDate = LocalDateTime.now().plusDays(30);
             }
         }
 
-        // Fallback to only full payment option
-        try {
-            InstallmentPlan fullPaymentPlan = installmentPlanRepository.findByName("Full Payment");
-            if (fullPaymentPlan != null) {
-                return List.of(convertToPlanDTO(fullPaymentPlan));
-            }
-        } catch (Exception e) {
-            logger.error("Error retrieving default full payment plan: {}", e.getMessage());
+        LocalDateTime now = LocalDateTime.now();
+        long daysUntilEvent = java.time.Duration.between(now, eventDate).toDays();
+
+        // Get all active plans
+        List<InstallmentPlan> plans = installmentPlanRepository.findAll().stream()
+                .filter(InstallmentPlan::getIsActive)
+                .collect(Collectors.toList());
+
+        // Filter based on days until event
+        if (daysUntilEvent <= 10) {
+            plans = plans.stream()
+                    .filter(p -> p.getNumberOfInstallments() == 1)
+                    .collect(Collectors.toList());
+        } else if (daysUntilEvent <= 30) {
+            plans = plans.stream()
+                    .filter(p -> p.getNumberOfInstallments() <= 2)
+                    .collect(Collectors.toList());
         }
 
-        // Ultimate fallback - create a default plan DTO
-        InstallmentPlanDTO defaultPlan = new InstallmentPlanDTO();
-        defaultPlan.setId(1);
-        defaultPlan.setName("Full Payment");
-        defaultPlan.setNumberOfInstallments(1);
-        defaultPlan.setPercentages(List.of(100.0));
-        defaultPlan.setDescription("Pay the full amount in one payment");
-
-        return List.of(defaultPlan);
+        // Convert to DTOs
+        return plans.stream()
+                .map(this::convertToInstallmentPlanDTO)
+                .collect(Collectors.toList());
     }
 
-    // Helper methods
-
     /**
-     * Convert InstallmentPlan entity to DTO
+     * Convert InstallmentPlan to DTO
      */
-    private InstallmentPlanDTO convertToPlanDTO(InstallmentPlan plan) {
+    private InstallmentPlanDTO convertToInstallmentPlanDTO(InstallmentPlan plan) {
         InstallmentPlanDTO dto = new InstallmentPlanDTO();
         dto.setId(plan.getId().intValue());
         dto.setName(plan.getName());
@@ -423,298 +552,35 @@ public class PaymentService {
     }
 
     /**
-     * Set installment information on payment
-     */
-    private void setInstallmentInfo(Payment payment, Order order, PaymentRequest paymentRequest) {
-        // Set installment info if provided
-        if (paymentRequest.getInstallmentPlanId() != null) {
-            payment.setInstallmentPlanId(paymentRequest.getInstallmentPlanId());
-
-            // Update order's installment plan if not already set
-            if (order.getInstallmentPlanId() == null) {
-                order.setInstallmentPlanId(paymentRequest.getInstallmentPlanId().longValue());
-
-                // Get plan details to set total installments
-                try {
-                    InstallmentPlan plan = installmentPlanRepository.findById(
-                                    paymentRequest.getInstallmentPlanId().longValue())
-                            .orElse(null);
-
-                    if (plan != null) {
-                        order.setInstallmentTotalInstallments(plan.getNumberOfInstallments());
-                    }
-                } catch (Exception e) {
-                    logger.error("Error retrieving installment plan: {}", e.getMessage());
-                }
-            }
-        }
-
-        if (paymentRequest.getInstallmentNumber() != null) {
-            payment.setInstallmentNumber(paymentRequest.getInstallmentNumber());
-        }
-
-        if (paymentRequest.getNotes() != null) {
-            payment.setNotes(paymentRequest.getNotes());
-        }
-    }
-
-    /**
-     * Calculate payment amounts
-     */
-    private void calculatePaymentAmounts(Payment payment, Order order) {
-        // Calculate total amount paid so far
-        Double totalPrice = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
-        Double totalPaid = order.getPayments().stream()
-                .filter(p -> "completed".equals(p.getStatus()))
-                .mapToDouble(Payment::getAmount)
-                .sum();
-
-        // Calculate remaining after this payment
-        payment.setRemainingAmount(Math.max(0, totalPrice - totalPaid - payment.getAmount()));
-
-        // Determine if this is a partial payment
-        payment.setIsPartialPayment(totalPaid + payment.getAmount() < totalPrice);
-
-        logger.debug("Payment amounts - Total: {}, Paid: {}, This payment: {}, Remaining: {}, Partial: {}",
-                totalPrice, totalPaid, payment.getAmount(), payment.getRemainingAmount(),
-                payment.getIsPartialPayment());
-    }
-
-    /**
-     * Update order payment status
-     */
-    private void updateOrderPaymentStatus(Order order) {
-        // Calculate total price and total paid
-        Double totalPrice = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
-        Double totalPaid = order.getPayments().stream()
-                .filter(p -> "completed".equals(p.getStatus()))
-                .mapToDouble(Payment::getAmount)
-                .sum();
-
-        // Update status based on payment amounts
-        if (totalPaid >= totalPrice) {
-            order.setPaymentStatus("completed");
-            logger.info("Order payment status updated to 'completed'");
-        } else if (totalPaid > 0) {
-            order.setPaymentStatus("partial");
-            logger.info("Order payment status updated to 'partial'");
-
-            // Update installment tracking if needed
-            updateInstallmentTracking(order);
-        } else {
-            order.setPaymentStatus("pending");
-            logger.info("Order payment status remains 'pending'");
-        }
-    }
-
-    /**
-     * Update installment tracking
-     */
-    private void updateInstallmentTracking(Order order) {
-        if (order.getInstallmentPlanId() != null) {
-            // Find the latest completed payment with installment number
-            Payment latestPayment = order.getPayments().stream()
-                    .filter(p -> "completed".equals(p.getStatus()) && p.getInstallmentNumber() != null)
-                    .max((p1, p2) -> p1.getInstallmentNumber().compareTo(p2.getInstallmentNumber()))
-                    .orElse(null);
-
-            if (latestPayment != null) {
-                // Increment to next installment
-                order.setCurrentInstallmentNumber(latestPayment.getInstallmentNumber() + 1);
-
-                // Set next installment due date
-                setNextInstallmentDueDate(order);
-
-                logger.info("Updated installment tracking - Current: {}, Total: {}",
-                        order.getCurrentInstallmentNumber(), order.getInstallmentTotalInstallments());
-            }
-        }
-    }
-
-    /**
-     * Set next installment due date
-     */
-    private void setNextInstallmentDueDate(Order order) {
-        if (order.getEventDetails() != null && order.getEventDetails().getEventDate() != null) {
-            try {
-                LocalDate eventDate = LocalDate.parse(order.getEventDetails().getEventDate());
-                LocalDate today = LocalDate.now();
-                long daysUntilEvent = ChronoUnit.DAYS.between(today, eventDate);
-
-                if (daysUntilEvent > 5) {
-                    // Set due date to halfway between now and event
-                    long halfwayDays = Math.max(daysUntilEvent / 2, 2); // At least 2 days ahead
-                    LocalDateTime dueDate = LocalDateTime.now().plusDays(halfwayDays);
-                    order.setNextInstallmentDueDate(dueDate);
-                    logger.debug("Next installment due date set to {} days from now", halfwayDays);
-                } else {
-                    // If event is very soon, make payment due tomorrow
-                    order.setNextInstallmentDueDate(LocalDateTime.now().plusDays(1));
-                    logger.debug("Event is soon, next installment due tomorrow");
-                }
-            } catch (Exception e) {
-                logger.error("Error calculating next installment due date: {}", e.getMessage());
-                // Default to 3 days from now
-                order.setNextInstallmentDueDate(LocalDateTime.now().plusDays(3));
-            }
-        }
-    }
-
-    /**
-     * Update event calendar after payment
-     */
-    private void updateEventAfterPayment(Order order) {
-        boolean isFullyPaid = "completed".equals(order.getPaymentStatus());
-
-        try {
-            eventService.createOrUpdateEventFromOrder(order, isFullyPaid);
-            logger.info("Event calendar updated with payment status for order: {}", order.getId());
-        } catch (Exception e) {
-            logger.error("Error updating event calendar: {}", e.getMessage(), e);
-        }
-    }
-
-    /**
-     * Check if event is within 24 hours
-     */
-    private boolean isEventWithin24Hours(Order order) {
-        if (order.getEventDetails() != null && order.getEventDetails().getEventDate() != null) {
-            try {
-                // Parse the event date
-                String eventDateStr = order.getEventDetails().getEventDate();
-                LocalDate eventDate = LocalDate.parse(eventDateStr);
-                LocalDateTime eventDateTime = eventDate.atStartOfDay();
-
-                // If event time is provided, use it
-                if (order.getEventDetails().getEventTime() != null) {
-                    String[] timeParts = order.getEventDetails().getEventTime().split(":");
-                    int hours = Integer.parseInt(timeParts[0]);
-                    int minutes = Integer.parseInt(timeParts[1]);
-                    eventDateTime = eventDate.atTime(hours, minutes);
-                }
-
-                // Check if event is within 24 hours
-                LocalDateTime now = LocalDateTime.now();
-                long hoursUntilEvent = ChronoUnit.HOURS.between(now, eventDateTime);
-
-                return hoursUntilEvent < 24;
-            } catch (Exception e) {
-                logger.error("Error parsing event date/time: {}", e.getMessage());
-                return false;
-            }
-        }
-        return false;
-    }
-
-    /**
-     * Set payment deadline in the summary DTO
-     */
-    private void setPaymentDeadline(PaymentSummaryDTO summary, Order order) {
-        if (!summary.getIsFullyPaid()) {
-            if (order.getNextInstallmentDueDate() != null) {
-                // Use the stored next installment due date
-                summary.setNextInstallmentDueDate(
-                        order.getNextInstallmentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME)
-                );
-            }
-
-            // Calculate final deadline (24 hours before event)
-            if (order.getEventDetails() != null && order.getEventDetails().getEventDate() != null) {
-                try {
-                    // Parse event date
-                    LocalDate eventDate = LocalDate.parse(order.getEventDetails().getEventDate());
-                    LocalDateTime eventDateTime = eventDate.atStartOfDay();
-
-                    // If event time is specified, use it
-                    if (order.getEventDetails().getEventTime() != null) {
-                        try {
-                            String[] timeParts = order.getEventDetails().getEventTime().split(":");
-                            int hours = Integer.parseInt(timeParts[0]);
-                            int minutes = Integer.parseInt(timeParts[1]);
-                            eventDateTime = eventDate.atTime(hours, minutes);
-                        } catch (Exception e) {
-                            logger.error("Error parsing event time: {}", e.getMessage());
-                        }
-                    }
-
-                    // Set deadline to 24 hours before event
-                    LocalDateTime deadlineDateTime = eventDateTime.minusHours(24);
-                    summary.setDeadlineDate(deadlineDateTime.format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                    logger.debug("Payment deadline set to 24 hours before event: {}", summary.getDeadlineDate());
-                } catch (Exception e) {
-                    logger.error("Error calculating payment deadline: {}", e.getMessage());
-                }
-            }
-        }
-    }
-
-    /**
-     * Add installment plan details to payment summary
-     */
-    private void addInstallmentPlanDetails(PaymentSummaryDTO summary, Order order) {
-        if (order.getInstallmentPlanId() != null) {
-            try {
-                InstallmentPlan plan = installmentPlanRepository.findById(order.getInstallmentPlanId())
-                        .orElse(null);
-
-                if (plan != null) {
-                    Map<String, Object> installmentPlanDetails = new HashMap<>();
-                    installmentPlanDetails.put("id", plan.getId());
-                    installmentPlanDetails.put("name", plan.getName());
-                    installmentPlanDetails.put("numberOfInstallments", plan.getNumberOfInstallments());
-                    installmentPlanDetails.put("percentages", plan.getPercentages());
-                    installmentPlanDetails.put("description", plan.getDescription());
-
-                    summary.setInstallmentPlan(installmentPlanDetails);
-                    summary.setCurrentInstallment(order.getCurrentInstallmentNumber());
-
-                    // Calculate next installment amount if not fully paid
-                    if (!summary.getIsFullyPaid() &&
-                            order.getCurrentInstallmentNumber() <= plan.getNumberOfInstallments()) {
-                        int currentInstallment = order.getCurrentInstallmentNumber();
-                        int installmentIndex = currentInstallment - 1;
-
-                        if (installmentIndex >= 0 && installmentIndex < plan.getPercentages().size()) {
-                            Double percentage = plan.getPercentages().get(installmentIndex);
-                            Double amount = (percentage / 100.0) * summary.getTotalAmount();
-                            summary.setNextInstallmentAmount(amount);
-                            logger.debug("Next installment amount: {}", amount);
-                        }
-                    }
-                }
-            } catch (Exception e) {
-                logger.error("Error getting installment plan details: {}", e.getMessage());
-            }
-        }
-    }
-
-    /**
-     * Get all pending payments that need admin verification
+     * Get pending payments as DTOs
      */
     public List<PaymentResponse> getPendingPaymentsAsDTO() {
         logger.info("Fetching pending payments for verification");
 
-        // Exclude PayHere payments which are verified automatically
-        List<Payment> pendingPayments = paymentRepository.findByStatusAndMethodNot("pending", "payhere");
+        List<Installment> pendingInstallments = installmentRepository.findAll().stream()
+                .filter(i -> "pending".equals(i.getStatus()) && !"payhere".equals(i.getPaymentMethod()))
+                .collect(Collectors.toList());
 
-        return pendingPayments.stream()
-                .map(paymentMapper::toDTO)
+        return pendingInstallments.stream()
+                .map(installment -> paymentMapper.installmentToPaymentResponse(installment))
                 .collect(Collectors.toList());
     }
 
     /**
-     * Get recently verified payments
+     * Get recently verified payments as DTOs
      */
     public List<PaymentResponse> getRecentlyVerifiedPaymentsAsDTO() {
         logger.info("Fetching recently verified payments");
 
-        // Get payments verified in the last 7 days
         LocalDateTime sevenDaysAgo = LocalDateTime.now().minusDays(7);
-        List<Payment> verifiedPayments = paymentRepository.findByStatusAndConfirmationDateTimeAfter(
-                "completed", sevenDaysAgo);
+        List<Installment> recentInstallments = installmentRepository.findAll().stream()
+                .filter(i -> "confirmed".equals(i.getStatus()) &&
+                        i.getConfirmationDate() != null &&
+                        i.getConfirmationDate().isAfter(sevenDaysAgo))
+                .collect(Collectors.toList());
 
-        return verifiedPayments.stream()
-                .map(paymentMapper::toDTO)
+        return recentInstallments.stream()
+                .map(installment -> paymentMapper.installmentToPaymentResponse(installment))
                 .collect(Collectors.toList());
     }
 
@@ -725,443 +591,49 @@ public class PaymentService {
         logger.info("Getting next installment info for order ID: {}", orderId);
 
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found with id: " + orderId));
+                .orElseThrow(() -> new RuntimeException("Order not found"));
 
         Map<String, Object> result = new HashMap<>();
 
-        // Check if order has an installment plan
-        if (order.getInstallmentPlanId() == null) {
+        Payment activePayment = order.getPayments().stream()
+                .filter(p -> !"rejected".equals(p.getStatus()))
+                .findFirst()
+                .orElse(null);
+
+        if (activePayment == null || !"installment".equals(activePayment.getPaymentType())) {
             result.put("hasInstallmentPlan", false);
-            result.put("message", "No installment plan has been set up for this order");
+            result.put("message", "No installment plan found for this order");
             return result;
         }
 
-        // Get installment plan details
-        try {
-            InstallmentPlan plan = installmentPlanRepository.findById(order.getInstallmentPlanId())
-                    .orElse(null);
+        Integer currentInstallmentNumber = activePayment.getCurrentInstallmentNumber();
+        result.put("currentInstallmentNumber", currentInstallmentNumber);
+        result.put("totalInstallments", activePayment.getTotalInstallments());
 
-            if (plan == null) {
-                result.put("hasInstallmentPlan", false);
-                result.put("message", "Installment plan not found");
-                return result;
-            }
+        if (currentInstallmentNumber > activePayment.getTotalInstallments()) {
+            result.put("allPaid", true);
+            result.put("message", "All installments have been paid");
+            return result;
+        }
 
-            Integer currentInstallment = order.getCurrentInstallmentNumber();
+        Installment nextInstallment = activePayment.getInstallments().stream()
+                .filter(i -> i.getInstallmentNumber().equals(currentInstallmentNumber))
+                .findFirst()
+                .orElse(null);
 
-            result.put("hasInstallmentPlan", true);
-            result.put("planId", plan.getId());
-            result.put("planName", plan.getName());
-            result.put("totalInstallments", plan.getNumberOfInstallments());
-            result.put("currentInstallment", currentInstallment);
-
-            // Check if all installments are completed
-            if (currentInstallment > plan.getNumberOfInstallments()) {
-                result.put("isComplete", true);
-                result.put("message", "All installments have been completed");
-                return result;
-            }
-
-            result.put("isComplete", false);
-
-            // Calculate next installment amount
-            Double totalPrice = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
-            int installmentIndex = currentInstallment - 1;
-
-            if (installmentIndex >= 0 && installmentIndex < plan.getPercentages().size()) {
-                Double percentage = plan.getPercentages().get(installmentIndex);
-                Double amount = (percentage / 100.0) * totalPrice;
-                result.put("nextInstallmentAmount", amount);
-            }
-
-            // Get due date if set
-            if (order.getNextInstallmentDueDate() != null) {
-                result.put("dueDate", order.getNextInstallmentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-
-                // Calculate days remaining
-                LocalDateTime now = LocalDateTime.now();
-                long daysRemaining = ChronoUnit.DAYS.between(now, order.getNextInstallmentDueDate());
-                result.put("daysRemaining", daysRemaining);
-
-                // Flag if due date is soon (less than 3 days)
-                result.put("isDueSoon", daysRemaining <= 3);
-                result.put("isOverdue", daysRemaining < 0);
-            } else {
-                // Calculate a default due date if not set
-                setNextInstallmentDueDate(order);
-                if (order.getNextInstallmentDueDate() != null) {
-                    result.put("suggestedDueDate",
-                            order.getNextInstallmentDueDate().format(DateTimeFormatter.ISO_LOCAL_DATE_TIME));
-                }
-            }
-
-            // Get available payment methods
-            result.put("availablePaymentMethods", List.of("payhere", "bank-transfer"));
-
-        } catch (Exception e) {
-            logger.error("Error getting next installment info: {}", e.getMessage(), e);
-            result.put("error", "Failed to get installment information: " + e.getMessage());
+        if (nextInstallment != null) {
+            result.put("nextInstallmentAmount", nextInstallment.getAmount());
+            result.put("nextInstallmentPercentage", nextInstallment.getPercentage());
+            result.put("status", nextInstallment.getStatus());
         }
 
         return result;
     }
 
     /**
-     * Initiate a PayHere payment for an order
-     * This method prepares parameters for the PayHere payment gateway
-     * CHANGE: Now we don't create a payment record until after successful payment
+     * Get payment mapper
      */
-    @Transactional
-    public Map<String, String> initiatePayHerePayment(PaymentRequest paymentRequest) {
-        logger.info("Initiating PayHere payment for order ID: {}", paymentRequest.getOrderId());
-
-        // Find the order
-        Long orderId = Long.valueOf(paymentRequest.getOrderId());
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
-
-        // Verify that partial payments are only allowed for events > 24 hours away
-        if (paymentRequest.getAmount() < order.getTotalPrice() && isEventWithin24Hours(order)) {
-            logger.warn("Attempted partial payment for order with event within 24 hours: {}", orderId);
-            throw new RuntimeException("Full payment is required for events within 24 hours");
-        }
-
-        // Create session parameters with order and payment info, but don't save a payment record
-        Map<String, String> paymentInfo = new HashMap<>();
-        paymentInfo.put("orderId", orderId.toString());
-        paymentInfo.put("amount", paymentRequest.getAmount().toString());
-
-        if (paymentRequest.getInstallmentPlanId() != null) {
-            paymentInfo.put("installmentPlanId", paymentRequest.getInstallmentPlanId().toString());
-        }
-
-        if (paymentRequest.getInstallmentNumber() != null) {
-            paymentInfo.put("installmentNumber", paymentRequest.getInstallmentNumber().toString());
-        }
-
-        if (paymentRequest.getNotes() != null) {
-            paymentInfo.put("notes", paymentRequest.getNotes());
-        }
-
-        // Build PayHere parameters
-        return buildPayHereParameters(order, paymentInfo);
+    public PaymentMapper getPaymentMapper() {
+        return paymentMapper;
     }
-
-    /**
-     * Verify a PayHere payment using the payment ID from PayHere
-     * CHANGE: Now we create the payment record on successful verification
-     */
-    @Transactional
-    public OrderResponse verifyPayHerePayment(String orderId, String paymentId) {
-        logger.info("Verifying PayHere payment - Order: {}, PayHere Payment ID: {}", orderId, paymentId);
-
-        // Find the order
-        Long orderIdLong = Long.valueOf(orderId);
-        Order order = orderRepository.findById(orderIdLong)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
-
-        // Create a new payment record for this PayHere transaction
-        Payment payment = new Payment();
-        payment.setMethod("payhere");
-        payment.setStatus("completed");
-        payment.setTransactionId(paymentId);
-        payment.setConfirmationDateTime(LocalDateTime.now());
-        payment.setOrder(order);
-
-        // Set payment amount
-        Double totalPrice = order.getTotalPrice() != null ? order.getTotalPrice() : 0.0;
-        Double totalPaid = order.getPayments().stream()
-                .filter(p -> "completed".equals(p.getStatus()))
-                .mapToDouble(Payment::getAmount)
-                .sum();
-
-        // Get payment amount from session or use the remaining amount
-        Double amount = Math.min(totalPrice - totalPaid, totalPrice);
-        payment.setAmount(amount);
-
-        // Set installment info if available from session
-        // These would need to come from the client side when verifying the payment
-
-        // Deactivate all existing payments for this order
-        deactivateAllPaymentsForOrder(order);
-
-        // Mark this payment as active
-        payment.setIsActive(true);
-
-        // Calculate payment amounts and determine if partial
-        calculatePaymentAmounts(payment, order);
-
-        // Add payment to order
-        order.getPayments().add(payment);
-        payment = paymentRepository.save(payment);
-        logger.info("Created completed PayHere payment record with ID: {}", payment.getId());
-
-        // Update order payment status
-        updateOrderPaymentStatus(order);
-
-        // Update event calendar
-        updateEventAfterPayment(order);
-
-        // Save order with updated status
-        Order savedOrder = orderRepository.save(order);
-
-        // Notify customer about payment verification
-        try {
-            notificationService.createPaymentVerificationNotification(savedOrder, payment, true);
-            logger.info("PayHere payment verification notification sent to customer");
-        } catch (Exception e) {
-            logger.error("Error creating PayHere verification notification: {}", e.getMessage(), e);
-        }
-
-        return new OrderResponse(); // Convert order to OrderResponse using mapper
-    }
-
-    /**
-     * Helper method to deactivate all payments for an order
-     */
-    private void deactivateAllPaymentsForOrder(Order order) {
-        for (Payment existingPayment : order.getPayments()) {
-            if (existingPayment.getIsActive() != null && existingPayment.getIsActive()) {
-                existingPayment.setIsActive(false);
-                paymentRepository.save(existingPayment);
-            }
-        }
-    }
-
-    /**
-     * Verify a manual payment (admin)
-     * CHANGE: Implement is_active flag properly
-     */
-    @Transactional
-    public OrderResponse verifyManualPayment(Long orderId, Long paymentId, boolean isApproved, String reason) {
-        logger.info("Verifying manual payment - Order: {}, Payment: {}, Approved: {}",
-                orderId, paymentId, isApproved);
-
-        // Find the order
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
-
-        // Find the payment
-        Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> {
-                    logger.error("Payment not found with id: {}", paymentId);
-                    return new RuntimeException("Payment not found with id: " + paymentId);
-                });
-
-        if (isApproved) {
-            // Deactivate all existing payments for this order
-            deactivateAllPaymentsForOrder(order);
-
-            // Approve payment and set as active
-            payment.setStatus("completed");
-            payment.setConfirmationDateTime(LocalDateTime.now());
-            payment.setIsActive(true);
-            logger.info("Payment approved: {}", payment.getId());
-
-            // Update order payment status
-            updateOrderPaymentStatus(order);
-
-            // Update event in calendar
-            updateEventAfterPayment(order);
-        } else {
-            // Reject payment
-            payment.setStatus("rejected");
-            payment.setIsActive(false);
-            if (reason != null && !reason.isEmpty()) {
-                payment.setRejectionReason(reason);
-            }
-            logger.info("Payment rejected: {}, reason: {}", payment.getId(), reason);
-        }
-
-        // Save payment and order
-        paymentRepository.save(payment);
-        Order savedOrder = orderRepository.save(order);
-
-        // Notify customer about payment verification
-        try {
-            notificationService.createPaymentVerificationNotification(savedOrder, payment, isApproved);
-            logger.info("Payment verification notification sent to customer");
-        } catch (Exception e) {
-            logger.error("Error creating verification notification: {}", e.getMessage(), e);
-        }
-
-        return new OrderResponse(); // Convert order to OrderResponse using mapper
-    }
-
-
-
-    /**
-     * Build parameters for PayHere payment gateway
-     * This overloaded method accepts a Map of payment info instead of a Payment entity
-     */
-    private Map<String, String> buildPayHereParameters(Order order, Map<String, String> paymentInfo) {
-        logger.info("Building PayHere parameters for order ID: {}", order.getId());
-
-        Map<String, String> params = new HashMap<>();
-
-        // Get PayHere configuration from the autowired instance
-        String merchantId = payHereConfig.getMerchantId();
-        String returnUrl = payHereConfig.getReturnUrl();
-        String cancelUrl = payHereConfig.getCancelUrl();
-        String notifyUrl = payHereConfig.getNotifyUrl();
-
-        // Customer details
-        String customerName = "";
-        String customerEmail = "";
-        String customerPhone = "";
-        String customerAddress = "";
-
-        if (order.getCustomer() != null) {
-            customerName = order.getCustomer().getFirstName() != null ?
-                    order.getCustomer().getFirstName() + " " + order.getCustomer().getLastName() : "Customer";
-            customerEmail = order.getCustomer().getEmail() != null ?
-                    order.getCustomer().getEmail() : "";
-            customerPhone = order.getCustomer().getContact() != null ?
-                    order.getCustomer().getContact() : "";
-
-            // Use a blank address as Customer entity might not have address fields
-            customerAddress = "";
-        }
-
-        // Item details
-        String itemName = "Order #" + order.getId();
-        if (order.getEventDetails() != null && order.getEventDetails().getEventCategory() != null) {
-            itemName = order.getEventDetails().getEventCategory() + " - Order #" + order.getId();
-        }
-
-        // Add required parameters
-        params.put("merchant_id", merchantId);
-        params.put("return_url", returnUrl);
-        params.put("cancel_url", cancelUrl);
-        params.put("notify_url", notifyUrl);
-
-        params.put("order_id", order.getId().toString());
-        params.put("items", itemName);
-        params.put("currency", "LKR"); // Assuming Sri Lankan Rupees
-        params.put("amount", paymentInfo.get("amount")); // Use amount from payment info
-
-        // Customer details
-        params.put("first_name", customerName);
-        params.put("email", customerEmail);
-        params.put("phone", customerPhone);
-        params.put("address", customerAddress);
-        params.put("city", "");
-        params.put("country", "Sri Lanka");
-
-        // Custom parameters to track installment info if provided
-        if (paymentInfo.containsKey("installmentPlanId")) {
-            params.put("custom_1", paymentInfo.get("installmentPlanId"));
-        }
-
-        if (paymentInfo.containsKey("installmentNumber")) {
-            params.put("custom_2", "installment:" + paymentInfo.get("installmentNumber"));
-        }
-
-        // Calculate hash using PayHere verifier
-        try {
-            String hash = payHereVerifier.generateHash(params);
-            params.put("hash", hash);
-            logger.debug("Generated PayHere hash: {}", hash);
-        } catch (Exception e) {
-            logger.error("Error generating PayHere hash: {}", e.getMessage(), e);
-        }
-
-        // Add base URL for frontend to construct complete URL
-        params.put("payhere_url", payHereConfig.getBaseUrl());
-
-        logger.info("PayHere parameters built successfully");
-        return params;
-    }
-
-    /**
-     * Initialize default installment plans if they don't exist
-     * This ensures the database always has the required plans
-     */
-    @Transactional
-    public void initializeDefaultPlans() {
-        if (installmentPlanRepository.count() > 0) {
-            logger.info("Installment plans already exist - skipping initialization");
-            return;
-        }
-
-        logger.info("Creating default installment plans");
-
-        // Create and save default plans from InstallmentPlanService
-        // This ensures consistency between frontend and backend
-        InstallmentPlanService planService = new InstallmentPlanService();
-        planService.initializeDefaultPlans();
-    }
-
-    /**
-     * Process a payment for an order
-     * Handles both PayHere and bank transfer methods
-     */
-    @Transactional
-    public OrderResponse processPayment(PaymentRequest paymentRequest) {
-        logger.info("Processing payment for order ID: {}", paymentRequest.getOrderId());
-
-        // Find the order
-        Long orderId = Long.valueOf(paymentRequest.getOrderId());
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> {
-                    logger.error("Order not found with id: {}", orderId);
-                    return new RuntimeException("Order not found with id: " + orderId);
-                });
-
-        // Verify that partial payments are only allowed for events > 24 hours away
-        if (paymentRequest.getAmount() < order.getTotalPrice() && isEventWithin24Hours(order)) {
-            logger.warn("Attempted partial payment for order with event within 24 hours: {}", orderId);
-            throw new RuntimeException("Full payment is required for events within 24 hours");
-        }
-
-        // Create and save payment record
-        Payment payment = new Payment();
-        payment.setAmount(paymentRequest.getAmount());
-        payment.setMethod(paymentRequest.getPaymentMethod());
-        payment.setTransactionId(paymentRequest.getTransactionId());
-        payment.setStatus("completed");
-        payment.setOrder(order);
-        payment.setConfirmationDateTime(LocalDateTime.now());
-
-        // Handle installment tracking
-        setInstallmentInfo(payment, order, paymentRequest);
-
-        // Calculate payment amounts and determine if partial
-        calculatePaymentAmounts(payment, order);
-
-        // Add payment to order's payment list
-        order.getPayments().add(payment);
-        payment = paymentRepository.save(payment);
-        logger.info("Created payment record with ID: {}", payment.getId());
-
-        // Update order payment status
-        updateOrderPaymentStatus(order);
-
-        // Update event calendar
-        updateEventAfterPayment(order);
-
-        // Save order with updated status
-        Order savedOrder = orderRepository.save(order);
-
-        // Create notification about the payment
-        try {
-            notificationService.createPaymentNotification(savedOrder, payment);
-            logger.info("Payment notification created for order: {}", order.getId());
-        } catch (Exception e) {
-            logger.error("Error creating payment notification: {}", e.getMessage(), e);
-            // Continue processing as this is non-critical
-        }
-
-        return new OrderResponse(); // Convert order to OrderResponse using mapper
-    }
-
 }

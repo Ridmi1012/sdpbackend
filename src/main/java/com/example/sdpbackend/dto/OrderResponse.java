@@ -6,12 +6,13 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.Map;
 
-    @Data
+@Data
     @NoArgsConstructor
     @AllArgsConstructor
      public class OrderResponse {
-        private String _id;
+        private String id;
         private String orderNumber;
         private String designId;
         private String orderType;
@@ -27,8 +28,22 @@ import java.time.LocalDateTime;
         private String cancellationReason;
         private LocalDateTime createdAt;
         private LocalDateTime updatedAt;
+        private Map<String, String> payHereParams;
 
-        @Data
+        public void setPayHereParams(Map<String, String> params) {
+        }
+
+    public Object getPayHereParams() {
+        return payHereParams;
+    }
+
+    // This method is for compatibility if needed
+    public void set_id(String id) {
+        this.id = id;
+    }
+
+
+    @Data
         @NoArgsConstructor
         @AllArgsConstructor
         public static class CustomDetails {
