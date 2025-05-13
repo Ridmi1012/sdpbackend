@@ -2,13 +2,11 @@ package com.example.sdpbackend.service;
 
 import com.example.sdpbackend.dto.OrderRequest;
 import com.example.sdpbackend.dto.OrderResponse;
-import com.example.sdpbackend.entity.Customer;
-import com.example.sdpbackend.entity.Design;
-import com.example.sdpbackend.entity.EventDetails;
-import com.example.sdpbackend.entity.Order;
+import com.example.sdpbackend.entity.*;
 import com.example.sdpbackend.exception.OrderException;
 import com.example.sdpbackend.repository.CustomerRepository;
 import com.example.sdpbackend.repository.DesignRepository;
+import com.example.sdpbackend.repository.OrderItemRepository;
 import com.example.sdpbackend.repository.OrderRepository;
 import com.example.sdpbackend.util.OrderMapper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.stream.Collectors;
@@ -38,11 +37,13 @@ public class OrderService {
     @Autowired
     private EventService eventService;
 
+    @Autowired
+    private OrderItemRepository orderItemRepository;
+
     private final Random random = new Random();
 
     @Transactional
     public OrderResponse createOrder(OrderRequest orderRequest, Customer customer) {
-        // Create order entity using mapper
         Order order = new Order();
 
         // Set basic order properties
@@ -52,12 +53,20 @@ public class OrderService {
         order.setCustomer(customer);
         order.setStatus(orderRequest.getStatus() != null ? orderRequest.getStatus() : "pending");
 
-        // For as-is orders, fetch the base price from the design
+        // Handle different order types
         if ("as-is".equals(order.getOrderType())) {
+            // For as-is orders, get base price from design
             Long designId = Long.parseLong(String.valueOf(order.getDesignId()));
             Design design = designRepository.findById(Math.toIntExact(designId))
                     .orElseThrow(() -> new RuntimeException("Design not found with id: " + designId));
             order.setBasePrice(design.getBasePrice().doubleValue());
+        } else if ("request-similar".equals(order.getOrderType())) {
+            // For request-similar orders, set customization fields
+            order.setThemeColor(orderRequest.getThemeColor());
+            order.setConceptCustomization(orderRequest.getConceptCustomization());
+
+            // Initialize base price to 0 (will be calculated from items)
+            order.setBasePrice(0.0);
         }
 
         // Create and populate EventDetails
@@ -81,12 +90,116 @@ public class OrderService {
 
         order.setEventDetails(eventDetails);
 
-        // Save the order (cascade will save eventDetails)
+        // Save the order first to get the ID
         Order savedOrder = orderRepository.save(order);
+
+        // Handle order items for request-similar orders
+        if ("request-similar".equals(order.getOrderType()) && orderRequest.getOrderItems() != null) {
+            double totalItemsPrice = 0.0;
+            List<OrderItem> orderItems = new ArrayList<>();
+
+            for (OrderRequest.OrderItemRequest itemRequest : orderRequest.getOrderItems()) {
+                OrderItem orderItem = new OrderItem();
+                orderItem.setOrder(savedOrder);
+                orderItem.setItemId(itemRequest.getItemId());
+                orderItem.setItemName(itemRequest.getItemName());
+                orderItem.setItemCategory(itemRequest.getItemCategory());
+                orderItem.setQuantity(itemRequest.getQuantity());
+                orderItem.setPricePerUnit(itemRequest.getPricePerUnit());
+                orderItem.setTotalPrice(itemRequest.getQuantity() * itemRequest.getPricePerUnit());
+                orderItem.setStatus(itemRequest.getStatus() != null ? itemRequest.getStatus() : "active");
+
+                // Calculate total only for active items
+                if ("active".equals(orderItem.getStatus())) {
+                    totalItemsPrice += orderItem.getTotalPrice();
+                }
+
+                orderItems.add(orderItem);
+            }
+
+            // Save all order items
+            orderItemRepository.saveAll(orderItems);
+            savedOrder.setOrderItems(orderItems);
+
+            // IMPORTANT: Update and save the base price
+            savedOrder.setBasePrice(totalItemsPrice);
+            savedOrder = orderRepository.save(savedOrder); // Save again to persist the base price
+        }
 
         // Send notification to admin about new order
         notificationService.createOrderNotification(savedOrder);
 
+        return orderMapper.toResponse(savedOrder);
+    }
+
+    @Transactional
+    public OrderResponse updateOrderItems(Long orderId, List<OrderRequest.OrderItemRequest> itemRequests) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
+
+        if (!"request-similar".equals(order.getOrderType())) {
+            throw new OrderException("Order items can only be updated for request-similar orders");
+        }
+
+        // Clear existing items
+        orderItemRepository.deleteAll(order.getOrderItems());
+        order.getOrderItems().clear();
+
+        // Add new items
+        double totalItemsPrice = 0.0;
+        List<OrderItem> newOrderItems = new ArrayList<>();
+
+        for (OrderRequest.OrderItemRequest itemRequest : itemRequests) {
+            OrderItem orderItem = new OrderItem();
+            orderItem.setOrder(order);
+            orderItem.setItemId(itemRequest.getItemId());
+            orderItem.setItemName(itemRequest.getItemName());
+            orderItem.setItemCategory(itemRequest.getItemCategory());
+            orderItem.setQuantity(itemRequest.getQuantity());
+            orderItem.setPricePerUnit(itemRequest.getPricePerUnit());
+            orderItem.setTotalPrice(itemRequest.getQuantity() * itemRequest.getPricePerUnit());
+            orderItem.setStatus(itemRequest.getStatus() != null ? itemRequest.getStatus() : "active");
+
+            if ("active".equals(orderItem.getStatus())) {
+                totalItemsPrice += orderItem.getTotalPrice();
+            }
+
+            newOrderItems.add(orderItem);
+        }
+
+        orderItemRepository.saveAll(newOrderItems);
+        order.setOrderItems(newOrderItems);
+
+        // Update base price
+        order.setBasePrice(totalItemsPrice);
+
+        // Recalculate total price
+        Double transportCost = order.getTransportationCost() != null ? order.getTransportationCost() : 0.0;
+        Double additionalCost = order.getAdditionalRentalCost() != null ? order.getAdditionalRentalCost() : 0.0;
+        order.setTotalPrice(totalItemsPrice + transportCost + additionalCost);
+
+        Order savedOrder = orderRepository.save(order);
+        return orderMapper.toResponse(savedOrder);
+    }
+
+    // NEW METHOD - Update customization for request-similar orders
+    @Transactional
+    public OrderResponse updateCustomization(Long orderId, String themeColor, String conceptCustomization) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new OrderException("Order not found with id: " + orderId));
+
+        if (!"request-similar".equals(order.getOrderType())) {
+            throw new OrderException("Customization can only be updated for request-similar orders");
+        }
+
+        if (themeColor != null) {
+            order.setThemeColor(themeColor);
+        }
+        if (conceptCustomization != null) {
+            order.setConceptCustomization(conceptCustomization);
+        }
+
+        Order savedOrder = orderRepository.save(order);
         return orderMapper.toResponse(savedOrder);
     }
 
@@ -199,6 +312,7 @@ public class OrderService {
         return "ORD-" + datePrefix + "-" + randomSuffix;
     }
 
+    // MODIFIED - Added support for request-similar orders
     @Transactional
     public OrderResponse updateOrder(Long orderId, Double transportationCost, Double additionalRentalCost, String status) {
         Order order = orderRepository.findById(orderId)
@@ -228,3 +342,4 @@ public class OrderService {
         return orderMapper.toResponse(savedOrder);
     }
 }
+
