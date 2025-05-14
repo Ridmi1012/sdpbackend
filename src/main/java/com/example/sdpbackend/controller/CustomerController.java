@@ -18,9 +18,16 @@ public class CustomerController {
         this.customerService = customerService;
     }
 
+    // MODIFIED: Added exception handling for validation errors
     @PostMapping
-    public Customer createCustomer(@RequestBody Customer customer) {
-        return customerService.createCustomer(customer);
+    public ResponseEntity<?> createCustomer(@RequestBody Customer customer) {
+        try {
+            Customer createdCustomer = customerService.createCustomer(customer);
+            return ResponseEntity.ok(createdCustomer);
+        } catch (IllegalArgumentException e) {
+            // NEW: Return validation errors with proper status
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 
     @GetMapping("/{id}")
@@ -33,8 +40,9 @@ public class CustomerController {
         }
     }
 
+    // MODIFIED: Added exception handling for validation errors
     @PutMapping("/{id}")
-    public ResponseEntity<Customer> updateCustomer(@PathVariable int id, @RequestBody Customer updatedCustomer) {
+    public ResponseEntity<?> updateCustomer(@PathVariable int id, @RequestBody Customer updatedCustomer) {
         if (id != updatedCustomer.getcustomerId()) {
             return ResponseEntity.badRequest().build();
         }
@@ -48,7 +56,12 @@ public class CustomerController {
         updatedCustomer.setUsername(existingCustomer.getUsername());
         updatedCustomer.setPassword(existingCustomer.getPassword());
 
-        Customer savedCustomer = customerService.updateCustomer(updatedCustomer);
-        return ResponseEntity.ok(savedCustomer);
+        try {
+            Customer savedCustomer = customerService.updateCustomer(updatedCustomer);
+            return ResponseEntity.ok(savedCustomer);
+        } catch (IllegalArgumentException e) {
+            // NEW: Return validation errors with proper status
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
     }
 }
