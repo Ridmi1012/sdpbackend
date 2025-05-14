@@ -44,7 +44,7 @@ public class SecurityConfig {
 
                         .requestMatchers("/api/password/forgot").permitAll()
                         .requestMatchers("/api/password/reset").permitAll()
-                        .requestMatchers("/api/password/validate-token").permitAll()
+                        .requestMatchers("/api/password/verify-code").permitAll()
 
                         // Allow notification subscription without authentication
                         .requestMatchers("/api/notifications/subscribe").permitAll()

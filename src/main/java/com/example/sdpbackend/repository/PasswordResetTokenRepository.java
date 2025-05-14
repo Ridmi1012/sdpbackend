@@ -10,13 +10,19 @@ import java.util.Optional;
 
 @Repository
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
-    /**
-     * NEW METHOD - Find token by token string
-     */
-    Optional<PasswordResetToken> findByToken(String token);
 
     /**
-     * NEW METHOD - Find token by username and userType
+     * Find token by username and userType
      */
     Optional<PasswordResetToken> findByUsernameAndUserType(String username, String userType);
+
+    /**
+     * NEW METHOD - Find by username and verification code
+     */
+    Optional<PasswordResetToken> findByUsernameAndVerificationCode(String username, String verificationCode);
+
+    /**
+     * NEW METHOD - Find most recent token by username
+     */
+    Optional<PasswordResetToken> findFirstByUsernameOrderByIdDesc(String username);
 }

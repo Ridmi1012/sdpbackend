@@ -20,11 +20,16 @@ public class PasswordResetToken {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String token;
+    // CHANGED: Now stores a 6-digit verification code instead of UUID token
+    @Column(nullable = false)
+    private String verificationCode;
 
     @Column(nullable = false)
     private String username;
+
+    // NEW: Added email field to send the code
+    @Column(nullable = false)
+    private String email;
 
     @Column(nullable = false)
     private String userType; // "CUSTOMER" or "ADMIN"
@@ -35,7 +40,19 @@ public class PasswordResetToken {
     @Column(nullable = false)
     private boolean used = false;
 
+    // NEW: Track verification attempts for security
+    @Column(nullable = false)
+    private int attemptCount = 0;
+
+    // NEW: Maximum allowed attempts
+    private static final int MAX_ATTEMPTS = 3;
+
     public boolean isExpired() {
         return LocalDateTime.now().isAfter(expiryDate);
+    }
+
+    // NEW: Check if maximum attempts exceeded
+    public boolean isMaxAttemptsExceeded() {
+        return attemptCount >= MAX_ATTEMPTS;
     }
 }
