@@ -15,4 +15,8 @@ public class AdminService {
     public Admin findByUsername(String username) {
         return adminRepository.findByUsername(username);
     }
+
+    public Admin updateAdmin(Admin admin) {
+        return adminRepository.save(admin);
+    }
 }
