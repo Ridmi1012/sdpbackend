@@ -1,10 +1,10 @@
 package com.example.sdpbackend.dto;
 
-
 import lombok.Data;
 
 @Data
-public class ResetPasswordRequest {
-    private String token;
+public class CodeResetPasswordRequest {
+    private String username;
+    private String code;
     private String newPassword;
 }

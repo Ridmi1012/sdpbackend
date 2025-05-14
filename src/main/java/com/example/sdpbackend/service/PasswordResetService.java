@@ -12,90 +12,144 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 
 @Service
 @Transactional
 public class PasswordResetService {
-
-
     private final PasswordResetTokenRepository tokenRepository;
     private final CustomerService customerService;
     private final AdminService adminService;
     private final PasswordEncoder passwordEncoder;
+    // NEW: Added email service
+    private final EmailService emailService;
 
     @Autowired
     public PasswordResetService(PasswordResetTokenRepository tokenRepository,
                                 CustomerService customerService,
                                 AdminService adminService,
-                                PasswordEncoder passwordEncoder) {
+                                PasswordEncoder passwordEncoder,
+                                EmailService emailService) {
         this.tokenRepository = tokenRepository;
         this.customerService = customerService;
         this.adminService = adminService;
         this.passwordEncoder = passwordEncoder;
+        this.emailService = emailService;
     }
 
     /**
-     * NEW METHOD - Generate password reset token for a user
+     * CHANGED: Now generates a verification code and sends it via email
      * @param username The username requesting password reset
-     * @return The generated token or null if user not found
+     * @return true if code was sent successfully, false if user not found
      */
-    public String generatePasswordResetToken(String username) {
+    public boolean generateAndSendResetCode(String username) {
         // Check if user is a customer
         Optional<Customer> customer = customerService.findByUsername(username);
         if (customer.isPresent()) {
-            return createResetToken(username, "CUSTOMER");
+            String email = customer.get().getEmail();
+            if (email != null && !email.isEmpty()) {
+                sendResetCode(username, email, "CUSTOMER");
+                return true;
+            }
         }
 
         // Check if user is an admin
         Admin admin = adminService.findByUsername(username);
-        if (admin != null) {
-            return createResetToken(username, "ADMIN");
+        if (admin != null && admin.getEmail() != null && !admin.getEmail().isEmpty()) {
+            sendResetCode(username, admin.getEmail(), "ADMIN");
+            return true;
         }
 
-        return null; // User not found
+        return false; // User not found or email not available
     }
 
     /**
-     * NEW METHOD - Create and save reset token
+     * NEW METHOD - Generate and send verification code
      */
-    private String createResetToken(String username, String userType) {
+    private void sendResetCode(String username, String email, String userType) {
         // Delete any existing token for this user
         Optional<PasswordResetToken> existingToken = tokenRepository.findByUsernameAndUserType(username, userType);
         existingToken.ifPresent(token -> tokenRepository.delete(token));
 
-        // Generate new token
-        String token = UUID.randomUUID().toString();
+        // Generate 6-digit verification code
+        String verificationCode = generateVerificationCode();
+
         PasswordResetToken resetToken = PasswordResetToken.builder()
-                .token(token)
+                .verificationCode(verificationCode)
                 .username(username)
+                .email(email)
                 .userType(userType)
-                .expiryDate(LocalDateTime.now().plusHours(1)) // Token expires in 1 hour
+                .expiryDate(LocalDateTime.now().plusMinutes(10)) // Code expires in 10 minutes
                 .used(false)
+                .attemptCount(0)
                 .build();
 
         tokenRepository.save(resetToken);
-        return token;
+
+        // Send code via email
+        emailService.sendPasswordResetCode(email, verificationCode, username);
     }
 
     /**
-     * NEW METHOD - Reset password using token
-     * @param token The reset token
+     * NEW METHOD - Generate random 6-digit verification code
+     */
+    private String generateVerificationCode() {
+        Random random = new Random();
+        int code = 100000 + random.nextInt(900000); // Generates 6-digit code
+        return String.valueOf(code);
+    }
+
+    /**
+     * NEW METHOD - Verify the code entered by user
+     * @param username The username
+     * @param code The verification code entered
+     * @return true if code is valid, false otherwise
+     */
+    public boolean verifyResetCode(String username, String code) {
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByUsernameAndVerificationCode(username, code);
+
+        if (tokenOpt.isEmpty()) {
+            // Try to increment attempt count even if code doesn't match
+            Optional<PasswordResetToken> userTokenOpt = tokenRepository.findFirstByUsernameOrderByIdDesc(username);
+            if (userTokenOpt.isPresent()) {
+                PasswordResetToken userToken = userTokenOpt.get();
+                userToken.setAttemptCount(userToken.getAttemptCount() + 1);
+                tokenRepository.save(userToken);
+            }
+            return false;
+        }
+
+        PasswordResetToken resetToken = tokenOpt.get();
+
+        // Check various conditions
+        if (resetToken.isExpired() || resetToken.isUsed() || resetToken.isMaxAttemptsExceeded()) {
+            return false;
+        }
+
+        // Mark as verified (but not used yet - that happens after password is actually reset)
+        return true;
+    }
+
+    /**
+     * CHANGED: Now requires username and verification code instead of token
+     * @param username The username
+     * @param code The verification code
      * @param newPassword The new password
      * @return true if successful, false otherwise
      */
-    public boolean resetPassword(String token, String newPassword) {
-        Optional<PasswordResetToken> resetTokenOpt = tokenRepository.findByToken(token);
+    public boolean resetPasswordWithCode(String username, String code, String newPassword) {
+        Optional<PasswordResetToken> tokenOpt = tokenRepository.findByUsernameAndVerificationCode(username, code);
 
-        if (resetTokenOpt.isEmpty()) {
-            return false; // Token not found
+        if (tokenOpt.isEmpty()) {
+            return false;
         }
 
-        PasswordResetToken resetToken = resetTokenOpt.get();
+        PasswordResetToken resetToken = tokenOpt.get();
 
         // Validate token
-        if (resetToken.isExpired() || resetToken.isUsed()) {
-            return false; // Token expired or already used
+        if (resetToken.isExpired() || resetToken.isUsed() || resetToken.isMaxAttemptsExceeded()) {
+            return false;
         }
 
         // Update password based on user type
@@ -116,7 +170,7 @@ public class PasswordResetService {
     }
 
     /**
-     * NEW METHOD - Update customer password without requiring current password
+     * Update customer password without requiring current password
      */
     private boolean updateCustomerPassword(String username, String newPassword) {
         Optional<Customer> customerOpt = customerService.findByUsername(username);
@@ -130,7 +184,7 @@ public class PasswordResetService {
     }
 
     /**
-     * NEW METHOD - Update admin password without requiring current password
+     * Update admin password without requiring current password
      */
     private boolean updateAdminPassword(String username, String newPassword) {
         Admin admin = adminService.findByUsername(username);
@@ -140,21 +194,5 @@ public class PasswordResetService {
             return true;
         }
         return false;
-    }
-
-    /**
-     * NEW METHOD - Validate reset token
-     * @param token The token to validate
-     * @return true if valid, false otherwise
-     */
-    public boolean validateToken(String token) {
-        Optional<PasswordResetToken> resetTokenOpt = tokenRepository.findByToken(token);
-
-        if (resetTokenOpt.isEmpty()) {
-            return false;
-        }
-
-        PasswordResetToken resetToken = resetTokenOpt.get();
-        return !resetToken.isExpired() && !resetToken.isUsed();
     }
 }

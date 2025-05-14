@@ -1,8 +1,6 @@
 package com.example.sdpbackend.controller;
 
-import com.example.sdpbackend.dto.ForgotPasswordRequest;
-import com.example.sdpbackend.dto.PasswordChangeRequest;
-import com.example.sdpbackend.dto.ResetPasswordRequest;
+import com.example.sdpbackend.dto.*;
 import com.example.sdpbackend.service.CustomerService;
 import com.example.sdpbackend.service.PasswordResetService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,7 +19,6 @@ public class PasswordController {
 
     @Autowired
     public PasswordController(CustomerService customerService, PasswordResetService passwordResetService) {
-
         this.customerService = customerService;
         this.passwordResetService = passwordResetService;
     }
@@ -50,26 +47,22 @@ public class PasswordController {
     }
 
     /**
-     * NEW METHOD - Handle forgot password request
-     * Generates a reset token for the given username
+     * CHANGED: Now sends verification code via email instead of generating token
      */
     @PostMapping("/forgot")
     public ResponseEntity<?> forgotPassword(@RequestBody ForgotPasswordRequest request) {
         System.out.println("Forgot password request received for user: " + request.getUsername());
 
         try {
-            String token = passwordResetService.generatePasswordResetToken(request.getUsername());
+            boolean success = passwordResetService.generateAndSendResetCode(request.getUsername());
 
-            if (token != null) {
-                // In a real application, you would send this token via email
-                // For development/testing, we're returning it in the response
+            if (success) {
                 return ResponseEntity.ok().body(Map.of(
-                        "message", "Password reset token generated successfully",
-                        "token", token // In production, don't return the token - send it via email
+                        "message", "Verification code has been sent to your email"
                 ));
             } else {
                 return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                        .body(Map.of("message", "User not found"));
+                        .body(Map.of("message", "User not found or email not available"));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -78,21 +71,49 @@ public class PasswordController {
     }
 
     /**
-     * NEW METHOD - Handle password reset with token
-     * Resets the password using the provided token
+     * NEW METHOD - Verify the code sent to email
      */
-    @PostMapping("/reset")
-    public ResponseEntity<?> resetPassword(@RequestBody ResetPasswordRequest request) {
-        System.out.println("Password reset request received with token");
+    @PostMapping("/verify-code")
+    public ResponseEntity<?> verifyCode(@RequestBody VerifyCodeRequest request) {
+        System.out.println("Code verification request received for user: " + request.getUsername());
 
         try {
-            boolean success = passwordResetService.resetPassword(request.getToken(), request.getNewPassword());
+            boolean isValid = passwordResetService.verifyResetCode(
+                    request.getUsername(),
+                    request.getCode()
+            );
+
+            if (isValid) {
+                return ResponseEntity.ok().body(Map.of("isValid", true));
+            } else {
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                        .body(Map.of("message", "Invalid or expired code"));
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(Map.of("message", "Error verifying code: " + e.getMessage()));
+        }
+    }
+
+    /**
+     * CHANGED: Now requires username and code instead of just token
+     */
+    @PostMapping("/reset")
+    public ResponseEntity<?> resetPassword(@RequestBody CodeResetPasswordRequest request) {
+        System.out.println("Password reset request received for user: " + request.getUsername());
+
+        try {
+            boolean success = passwordResetService.resetPasswordWithCode(
+                    request.getUsername(),
+                    request.getCode(),
+                    request.getNewPassword()
+            );
 
             if (success) {
                 return ResponseEntity.ok().body(Map.of("message", "Password reset successfully"));
             } else {
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                        .body(Map.of("message", "Invalid or expired token"));
+                        .body(Map.of("message", "Invalid or expired code"));
             }
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
@@ -100,21 +121,5 @@ public class PasswordController {
         }
     }
 
-    /**
-     * NEW METHOD - Validate reset token
-     * Checks if a reset token is valid
-     */
-    @GetMapping("/validate-token")
-    public ResponseEntity<?> validateToken(@RequestParam String token) {
-        System.out.println("Token validation request received");
-
-        try {
-            boolean isValid = passwordResetService.validateToken(token);
-
-            return ResponseEntity.ok().body(Map.of("isValid", isValid));
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body(Map.of("message", "Error validating token: " + e.getMessage()));
-        }
-    }
 }
+
