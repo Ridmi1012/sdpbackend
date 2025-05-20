@@ -403,4 +403,22 @@ public class OrderController {
         }
         throw new RuntimeException("JWT Token is missing or invalid");
     }
+
+    @GetMapping("/customer/{customerId}/design/{designId}/check")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<Boolean> checkOrderForDesign(
+            @PathVariable Integer customerId,
+            @PathVariable Long designId) {
+        boolean hasOrder = orderService.hasOrderForDesign(customerId, designId);
+        return ResponseEntity.ok(hasOrder);
+    }
+
+    @GetMapping("/customer/{customerId}/design/{designId}/orders")
+    @PreAuthorize("hasRole('CUSTOMER') or hasRole('ADMIN')")
+    public ResponseEntity<List<OrderResponse>> getOrdersForDesign(
+            @PathVariable Integer customerId,
+            @PathVariable Long designId) {
+        List<OrderResponse> orders = orderService.getOrdersForDesign(customerId, designId);
+        return ResponseEntity.ok(orders);
+    }
 }

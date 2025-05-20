@@ -28,6 +28,9 @@ public class Payment {
         private Double totalAmount;
 
         @Column(nullable = false)
+        private Double amount;
+
+        @Column(nullable = false)
         private String paymentMethod; // 'payhere', 'bank-transfer'
 
         @Column(nullable = false)
@@ -121,11 +124,6 @@ public class Payment {
                                 status = hasRejected ? "rejected" : "pending";
                         }
                 }
-        }
-
-        // Get the total amount of this payment
-        public Double getAmount() {
-                return totalAmount;
         }
 
 }

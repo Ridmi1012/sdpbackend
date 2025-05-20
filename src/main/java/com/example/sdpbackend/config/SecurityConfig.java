@@ -99,6 +99,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/orders").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/orders/new").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/api/orders/ongoing").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/customer/*/ongoing").authenticated()
                         .requestMatchers(HttpMethod.GET, "/api/orders/customer/**").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/orders/payment").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/orders/payhere/initiate").hasRole("CUSTOMER")
@@ -113,6 +114,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/cancel").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/event-details").hasRole("CUSTOMER")
                         .requestMatchers(HttpMethod.POST, "/api/orders/{orderId}/update").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, "/api/orders/customer/*/design/*/check").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/orders/customer/*/design/*/orders").authenticated()
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
