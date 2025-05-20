@@ -390,6 +390,24 @@ public class OrderService {
         Order savedOrder = orderRepository.save(order);
         return orderMapper.toResponse(savedOrder);
     }
+
+    public boolean hasOrderForDesign(Integer customerId, Long designId) {
+        List<String> activeStatuses = List.of("pending", "confirmed", "partial");
+        List<Order> orders = orderRepository.findByCustomerCustomerIdAndDesignIdAndStatusIn(
+                customerId, designId, activeStatuses);
+        return !orders.isEmpty();
+    }
+
+    public List<OrderResponse> getOrdersForDesign(Integer customerId, Long designId) {
+        List<String> activeStatuses = List.of("pending", "confirmed", "partial");
+        List<Order> orders = orderRepository.findByCustomerCustomerIdAndDesignIdAndStatusIn(
+                customerId, designId, activeStatuses);
+        return orders.stream()
+                .map(orderMapper::toResponse)
+                .collect(Collectors.toList());
+    }
+
+
 }
 
 

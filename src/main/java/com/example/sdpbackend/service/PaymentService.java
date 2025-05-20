@@ -70,9 +70,6 @@ public class PaymentService {
         return new OrderResponse();
     }
 
-    /**
-     * Create or update payment record (for bank transfer)
-     */
     private Payment createOrUpdatePayment(Order order, PaymentRequest paymentRequest) {
         // Check if order already has an active payment
         Payment existingPayment = order.getPayments().stream()
@@ -89,7 +86,11 @@ public class PaymentService {
             payment = new Payment();
             payment.setOrder(order);
             payment.setPaymentMethod(paymentRequest.getPaymentMethod());
+
+            // Set both totalAmount and amount fields
+            double amountValue = paymentRequest.getAmount() != null ? paymentRequest.getAmount() : order.getTotalPrice();
             payment.setTotalAmount(order.getTotalPrice());
+            payment.setAmount(amountValue); // Set the amount field correctly
 
             // Set payment type and plan
             if (paymentRequest.getInstallmentPlanId() != null && paymentRequest.getInstallmentPlanId() > 1) {
@@ -200,14 +201,14 @@ public class PaymentService {
         return new OrderResponse();
     }
 
-    /**
-     * Create payment record from successful PayHere payment
-     */
+    // Update in createPaymentFromPayHereSuccess method
     private Payment createPaymentFromPayHereSuccess(Order order, String paymentId) {
         Payment payment = new Payment();
         payment.setOrder(order);
         payment.setPaymentMethod("payhere");
         payment.setTotalAmount(order.getTotalPrice());
+        payment.setAmount(order.getTotalPrice()); // Set amount field correctly
+
         payment.setPaymentType("full");
         payment.setTotalInstallments(1);
         payment.setCurrentInstallment(1);
@@ -227,9 +228,7 @@ public class PaymentService {
         return paymentRepository.save(payment);
     }
 
-    /**
-     * Upload payment slip for manual payment
-     */
+    // Update in uploadPaymentSlip method to handle amount correctly
     @Transactional
     public OrderResponse uploadPaymentSlip(Long orderId, String imageUrl, Double amount,
                                            Boolean isPartialPayment, String notes) {
@@ -250,6 +249,12 @@ public class PaymentService {
             request.setAmount(amount);
             request.setNotes(notes);
             payment = createOrUpdatePayment(order, request);
+        } else {
+            // If the payment already exists, make sure the amount field is set
+            if (payment.getAmount() == null) {
+                payment.setAmount(amount);
+                payment = paymentRepository.save(payment);
+            }
         }
 
         Installment currentInstallment = payment.getCurrentInstallment();
