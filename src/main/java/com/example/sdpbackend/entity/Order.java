@@ -24,7 +24,7 @@ public class Order {
     private String orderNumber;
 
     @Column(nullable = false)
-    private String orderType; // 'as-is', 'request-similar', 'full-custom' // CHANGED - added full-custom
+    private String orderType; // 'as-is', 'request-similar', 'full-custom'
 
     @Column(nullable = false)
     private String status;
@@ -43,7 +43,7 @@ public class Order {
     private String themeColor;
     private String conceptCustomization;
 
-    // NEW FIELDS for full-custom scenario
+    // Fields for full-custom scenario
     @ElementCollection
     @CollectionTable(name = "order_inspiration_photos", joinColumns = @JoinColumn(name = "order_id"))
     @Column(name = "photo_url")
@@ -63,10 +63,11 @@ public class Order {
 
     private String paymentStatus;
 
-    private Long installmentPlanId;
-    private Integer installmentTotalInstallments;
-    private Integer currentInstallmentNumber = 1;
-    private LocalDateTime nextInstallmentDueDate;
+    // REMOVED: Redundant installment fields - these should be managed by Payment entity only
+    // private Long installmentPlanId; - REMOVED
+    // private Integer installmentTotalInstallments; - REMOVED
+    // private Integer currentInstallmentNumber = 1; - REMOVED
+    // private LocalDateTime nextInstallmentDueDate; - REMOVED
 
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<Payment> payments = new ArrayList<>();
@@ -94,6 +95,63 @@ public class Order {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
+    }
+
+    /**
+     * NEW METHOD - Gets the active payment for this order
+     * Returns the payment that is not rejected or completed
+     */
+    public Payment getActivePayment() {
+        return payments.stream()
+                .filter(p -> !"rejected".equals(p.getStatus()) && !"completed".equals(p.getStatus()))
+                .findFirst()
+                .orElse(null);
+    }
+
+    /**
+     * NEW METHOD - Checks if order has any active payments
+     * Used for business logic validation
+     */
+    public boolean hasActivePayment() {
+        return getActivePayment() != null;
+    }
+
+    /**
+     * NEW METHOD - Gets the latest payment regardless of status
+     * Used for displaying payment history
+     */
+    public Payment getLatestPayment() {
+        return payments.stream()
+                .max((p1, p2) -> p1.getCreatedAt().compareTo(p2.getCreatedAt()))
+                .orElse(null);
+    }
+
+    /**
+     * NEW METHOD - Calculates total amount paid across all confirmed payments
+     * Provides accurate payment tracking at order level
+     */
+    public Double getTotalPaidAmount() {
+        return payments.stream()
+                .mapToDouble(Payment::getTotalPaid)
+                .sum();
+    }
+
+    /**
+     * NEW METHOD - Calculates remaining amount to be paid
+     * Takes into account all confirmed payments
+     */
+    public Double getRemainingAmount() {
+        if (totalPrice == null) return 0.0;
+        return totalPrice - getTotalPaidAmount();
+    }
+
+    /**
+     * NEW METHOD - Checks if order is fully paid
+     * Based on actual payment confirmations
+     */
+    public boolean isFullyPaid() {
+        if (totalPrice == null || totalPrice == 0) return true;
+        return Math.abs(getRemainingAmount()) < 0.01; // Account for floating point precision
     }
 }
 
